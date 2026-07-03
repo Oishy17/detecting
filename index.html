@@ -181,6 +181,68 @@
 
   .close-x{position:absolute; top:10px; right:10px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer;}
   ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+
+  .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .table-scroll table{min-width:480px;}
+
+  /* ================= MOBILE ================= */
+  @media (max-width:640px){
+    .app-shell{padding:14px 12px 44px;}
+
+    .topbar{flex-direction:column; align-items:flex-start; padding:4px 0 16px; gap:12px;}
+    .brand h1{font-size:20px; line-height:1.25;}
+    .brand p{font-size:12.5px;}
+    .steps{width:100%; justify-content:space-between;}
+    .step{padding:8px 4px; font-size:10px; gap:5px; flex:1; justify-content:center;}
+
+    .view{padding-top:18px;}
+    .card{padding:15px;}
+    h2.sec-title{font-size:13px;}
+
+    .capture-tile{padding:24px 14px;}
+    .capture-tile .icon{width:36px; height:36px;}
+    .capture-tile h3{font-size:15px;}
+
+    video#camStream{max-height:42vh;}
+    .camera-actions{gap:8px;}
+    .camera-actions .btn{flex:1 1 auto; justify-content:center;}
+
+    .tips-head{font-size:12.5px; padding:12px 14px;}
+    .tips-body{font-size:12.5px; padding:0 14px 14px;}
+
+    .canvas-wrap{padding:10px;}
+    .canvas-help{font-size:11px;}
+
+    .lcd{padding:12px 13px;}
+    .lcd .lcd-main{font-size:18px;}
+
+    .row-2{grid-template-columns:1fr 82px; gap:6px;}
+    .seg button{padding:9px 4px; font-size:10.5px;}
+    .field select, .field input{font-size:16px;}
+
+    .btn{padding:12px 16px; font-size:13.5px;}
+    .btn-sm{padding:10px 14px; font-size:12px;}
+
+    .results-grid{gap:14px;}
+    #chartCanvas{height:240px;}
+    table.res-table{font-size:11px;}
+    table.res-table th, table.res-table td{padding:7px 6px;}
+    .fit-summary{gap:12px 20px;}
+
+    .dataset-bar{flex-direction:column; align-items:stretch; gap:12px;}
+    .dataset-bar > div{display:grid !important; grid-template-columns:1fr 1fr; gap:8px;}
+    .dataset-bar .btn{justify-content:center; width:100%;}
+
+    .actions-row{flex-direction:column;}
+    .actions-row .btn{justify-content:center; width:100%;}
+
+    .toast{width:calc(100% - 32px); text-align:center;}
+  }
+  @media (max-width:380px){
+    .steps{font-size:9px;}
+    .step{padding:7px 2px;}
+    .brand h1{font-size:18px;}
+  }
 </style>
 </head>
 <body>
@@ -329,10 +391,12 @@
       </div>
       <div class="card">
         <h2 class="sec-title">Readings</h2>
+        <div class="table-scroll">
         <table class="res-table" id="resTable">
           <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Response</th><th>Conc.</th></tr></thead>
           <tbody id="resTableBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 

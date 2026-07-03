@@ -9,20 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0F1512;
-    --bg-2:#0B100D;
-    --panel:#161F19;
-    --panel-2:#1D2921;
-    --line:#2A3A30;
-    --line-soft:#20291f;
-    --text:#E8EDE9;
-    --muted:#8CA398;
-    --muted-2:#5f7669;
-    --accent:#4FD1AE;
-    --accent-dim:#2c8a71;
-    --accent-2:#F5A623;
-    --accent-2-dim:#a16f1e;
-    --danger:#E8604C;
+    --bg:#F7F5EF;
+    --bg-2:#EFEBE1;
+    --panel:#FFFFFF;
+    --panel-2:#F5F2EA;
+    --line:#DDD6C4;
+    --line-soft:#E8E2D2;
+    --text:#1C231D;
+    --muted:#5E6B5F;
+    --muted-2:#8B9689;
+    --accent:#178A6E;
+    --accent-dim:#D7EFE7;
+    --accent-2:#B4650B;
+    --accent-2-dim:#F3E1C8;
+    --danger:#B5392A;
+    --lcd-accent:#4FD1AE;
     --mono:'IBM Plex Mono', monospace;
     --sans:'Space Grotesk', sans-serif;
     --body:'Inter', sans-serif;
@@ -32,14 +33,14 @@
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(1200px 600px at 15% -10%, rgba(79,209,174,0.06), transparent 60%),
+      radial-gradient(1200px 600px at 15% -10%, rgba(23,138,110,0.06), transparent 60%),
       var(--bg);
     color:var(--text);
     font-family:var(--body);
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
-  ::selection{background:var(--accent-dim); color:#fff;}
+  ::selection{background:var(--accent); color:#fff;}
 
   .app-shell{max-width:1180px; margin:0 auto; padding:20px 18px 60px;}
 
@@ -54,7 +55,7 @@
   .step{display:flex; align-items:center; gap:8px; padding:8px 14px; color:var(--muted-2); border-bottom:2px solid transparent;}
   .step .n{width:18px; height:18px; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:10px;}
   .step.active{color:var(--accent); border-color:var(--accent);}
-  .step.active .n{border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px rgba(79,209,174,.35);}
+  .step.active .n{border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px rgba(23,138,110,.35);}
   .step.done{color:var(--text);}
   .step.done .n{border-color:var(--accent-dim); background:var(--accent-dim); color:#08130f;}
 
@@ -70,7 +71,7 @@
     padding:11px 20px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--text);
     cursor:pointer; transition:border-color .15s, background .15s, transform .05s; display:inline-flex; align-items:center; gap:8px;
   }
-  .btn:hover{border-color:var(--accent-dim);}
+  .btn:hover{border-color:var(--accent);}
   .btn:active{transform:scale(.98);}
   .btn-primary{background:var(--accent); color:#08130f; border-color:var(--accent); font-weight:600;}
   .btn-primary:hover{background:#5fe0bd;}
@@ -87,7 +88,7 @@
     display:flex; flex-direction:column; align-items:center; gap:12px; cursor:pointer; background:var(--panel);
     transition:border-color .15s, background .15s;
   }
-  .capture-tile:hover{border-color:var(--accent-dim); background:var(--panel-2);}
+  .capture-tile:hover{border-color:var(--accent); background:var(--panel-2);}
   .capture-tile .icon{width:44px; height:44px; color:var(--accent);}
   .capture-tile h3{margin:0; font-family:var(--sans); font-size:16px;}
   .capture-tile p{margin:0; color:var(--muted); font-size:12.5px; max-width:220px;}
@@ -116,11 +117,11 @@
     border:1px solid var(--line-soft); border-radius:8px; padding:10px 12px; cursor:pointer; background:var(--bg-2);
     display:flex; justify-content:space-between; align-items:center; gap:8px;
   }
-  .marker-item.selected{border-color:var(--accent); background:rgba(79,209,174,.06);}
+  .marker-item.selected{border-color:var(--accent); background:rgba(23,138,110,.08);}
   .marker-item .tag{font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:20px; letter-spacing:.04em;}
-  .tag.known{background:rgba(79,209,174,.15); color:var(--accent);}
-  .tag.unknown{background:rgba(245,166,35,.15); color:var(--accent-2);}
-  .tag.reference{background:rgba(140,163,152,.18); color:var(--muted);}
+  .tag.known{background:rgba(23,138,110,.13); color:var(--accent);}
+  .tag.unknown{background:rgba(180,101,11,.13); color:var(--accent-2);}
+  .tag.reference{background:rgba(94,107,95,.13); color:var(--muted);}
   .marker-item .swatch{width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.25); flex-shrink:0;}
   .marker-item .mi-main{display:flex; align-items:center; gap:9px; overflow:hidden;}
   .marker-item .mi-label{font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -147,9 +148,9 @@
     font-family:var(--mono); position:relative; overflow:hidden;
   }
   .lcd::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(79,209,174,.025) 0px, rgba(79,209,174,.025) 1px, transparent 1px, transparent 3px); pointer-events:none;}
-  .lcd .lcd-row{display:flex; justify-content:space-between; font-size:11px; color:var(--muted-2); margin-bottom:4px; letter-spacing:.05em;}
-  .lcd .lcd-main{font-size:22px; color:var(--accent); text-shadow:0 0 12px rgba(79,209,174,.45); letter-spacing:.02em;}
-  .lcd .lcd-sub{font-size:12px; color:var(--muted); margin-top:6px;}
+  .lcd .lcd-row{display:flex; justify-content:space-between; font-size:11px; color:#5f7669; margin-bottom:4px; letter-spacing:.05em;}
+  .lcd .lcd-main{font-size:22px; color:var(--lcd-accent); text-shadow:0 0 12px rgba(79,209,174,.45); letter-spacing:.02em;}
+  .lcd .lcd-sub{font-size:12px; color:#8CA398; margin-top:6px;}
 
   hr.div{border:none; border-top:1px solid var(--line-soft); margin:14px 0;}
 
@@ -337,13 +338,13 @@
 
     <div class="card" style="margin-top:18px;">
       <h2 class="sec-title">ML dataset (this session)</h2>
-      <p class="muted" style="font-size:12.5px; margin-top:-6px;">Each "Save reading" adds this photo's markers, colors and concentrations as one record — export it to accumulate training data across sessions/devices.</p>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px;">"Save" asks for a file name, then downloads two files with that same name: the photo with marked points drawn on it (.png) and a matching data table (.csv) — no timestamp column, ready to open in Excel. Every save is also kept in this session so you can bulk-export the whole batch below.</p>
       <div class="dataset-bar">
         <span class="dataset-count">Saved this session: <b id="datasetCount">0</b> record(s), <b id="datasetMarkerCount">0</b> marker rows</span>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-sm" id="btnSaveRecord">Save this reading to dataset</button>
-          <button class="btn btn-sm" id="btnExportJSON">Export JSON</button>
-          <button class="btn btn-sm" id="btnExportCSV">Export CSV</button>
+          <button class="btn btn-sm" id="btnSaveRecord">Save (image + CSV)</button>
+          <button class="btn btn-sm" id="btnExportJSON">Export all — JSON</button>
+          <button class="btn btn-sm" id="btnExportCSV">Export all — CSV</button>
           <button class="btn btn-sm btn-danger" id="btnClearDataset">Clear session</button>
         </div>
       </div>
@@ -785,12 +786,12 @@ function drawChart(){
   const px = x => pad.l + (x-xMin)/(xMax-xMin||1) * (cssW-pad.l-pad.r);
   const py = y => cssH-pad.b - (y-yMin)/(yMax-yMin||1) * (cssH-pad.t-pad.b);
 
-  ctx.strokeStyle = '#2A3A30'; ctx.lineWidth=1; ctx.font='10px IBM Plex Mono, monospace'; ctx.fillStyle='#8CA398';
+  ctx.strokeStyle = '#B7AF98'; ctx.lineWidth=1; ctx.font='10px IBM Plex Mono, monospace'; ctx.fillStyle='#5E6B5F';
   ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, cssH-pad.b); ctx.lineTo(cssW-pad.r, cssH-pad.b); ctx.stroke();
   for(let i=0;i<=4;i++){
     const yv = yMin + (yMax-yMin)*i/4;
     const yy = py(yv);
-    ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(cssW-pad.r,yy); ctx.stroke();
+    ctx.strokeStyle='rgba(28,35,29,.07)'; ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(cssW-pad.r,yy); ctx.stroke();
     ctx.fillText(yv.toFixed(2), 4, yy+3);
   }
   for(let i=0;i<=4;i++){
@@ -799,78 +800,127 @@ function drawChart(){
   }
 
   // regression line
-  ctx.strokeStyle = '#4FD1AE'; ctx.lineWidth=1.6;
+  ctx.strokeStyle = '#178A6E'; ctx.lineWidth=1.8;
   ctx.beginPath();
   ctx.moveTo(px(xMin), py(state.fit.slope*xMin+state.fit.intercept));
   ctx.lineTo(px(xMax), py(state.fit.slope*xMax+state.fit.intercept));
   ctx.stroke();
 
   knowns.forEach(m=>{
-    ctx.beginPath(); ctx.fillStyle = '#4FD1AE';
+    ctx.beginPath(); ctx.fillStyle = '#178A6E';
     ctx.arc(px(m.resultConc), py(m.response), 4, 0, Math.PI*2); ctx.fill();
   });
   unknowns.forEach(m=>{
     if(!isFinite(m.resultConc)) return;
     const x=px(m.resultConc), y=py(m.response);
-    ctx.fillStyle='#F5A623';
+    ctx.fillStyle='#B4650B';
     ctx.beginPath(); ctx.moveTo(x,y-5); ctx.lineTo(x+5,y); ctx.lineTo(x,y+5); ctx.lineTo(x-5,y); ctx.closePath(); ctx.fill();
   });
 }
 
-/* ============================= DATASET (session-only, export to persist) ============================= */
+/* ============================= SAVE: filename-prompted image + CSV pair ============================= */
 function updateDatasetCounters(){
   document.getElementById('datasetCount').textContent = state.dataset.length;
   document.getElementById('datasetMarkerCount').textContent = state.dataset.reduce((a,r)=>a+r.markers.length,0);
 }
-document.getElementById('btnSaveRecord').onclick = ()=>{
-  if(!state.fit){ toast('Run Analyze first'); return; }
-  const thumb = document.createElement('canvas');
-  const scale = Math.min(1, 260/state.imgW);
-  thumb.width = Math.round(state.imgW*scale); thumb.height = Math.round(state.imgH*scale);
-  thumb.getContext('2d').drawImage(state.sourceCanvas, 0,0, thumb.width, thumb.height);
-  const record = {
-    id: 'rec_'+Date.now(),
-    timestamp: new Date().toISOString(),
-    device: navigator.userAgent,
-    imageThumbnail: thumb.toDataURL('image/jpeg', 0.6),
-    fit: state.fit,
-    markers: state.markers.filter(m=>m.sampled).map(m=>({
-      markerId: m.id, type: m.type, label: m.label, unit: m.unit,
-      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab,
-      response: m.response, concentration: isFinite(m.resultConc) ? m.resultConc : null
-    }))
-  };
-  state.dataset.push(record);
-  updateDatasetCounters();
-  toast('Saved to session dataset — remember to export before closing the tab');
-};
-document.getElementById('btnExportJSON').onclick = ()=>{
-  if(state.dataset.length===0){ toast('No saved records yet'); return; }
-  downloadBlob(JSON.stringify(state.dataset, null, 2), 'colorimeter_dataset.json', 'application/json');
-};
-document.getElementById('btnExportCSV').onclick = ()=>{
-  if(state.dataset.length===0){ toast('No saved records yet'); return; }
-  const rows = [['record_id','timestamp','device','fit_channel','fit_metric','fit_slope','fit_intercept','fit_r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration']];
-  state.dataset.forEach(rec=>{
-    rec.markers.forEach(m=>{
-      rows.push([rec.id, rec.timestamp, JSON.stringify(rec.device), rec.fit.channel, rec.fit.metric, rec.fit.slope, rec.fit.intercept, rec.fit.r2,
-        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
-    });
+function sanitizeFilename(name){
+  const cleaned = name.replace(/[^a-z0-9_\-]+/gi, '_').replace(/^_+|_+$/g,'');
+  return cleaned || ('reading_'+Date.now());
+}
+// Draws markers onto a full-resolution copy of the source image (for the saved photo, not just the on-screen preview)
+function drawAnnotatedImage(){
+  const w = state.imgW, h = state.imgH;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  octx.drawImage(state.sourceCanvas, 0, 0);
+  const lineW = Math.max(2, Math.round(w*0.0035));
+  const fontSize = Math.max(14, Math.round(w*0.018));
+  state.markers.forEach(m=>{
+    const cx = m.x*w, cy = m.y*h, rr = m.r*Math.min(w,h);
+    octx.lineWidth = lineW;
+    octx.strokeStyle = m.type==='known' ? '#4FD1AE' : m.type==='reference' ? '#c9d6cf' : '#F5A623';
+    octx.beginPath(); octx.arc(cx, cy, rr, 0, Math.PI*2); octx.stroke();
+    const label = '#'+m.id + (m.label ? (' '+m.label) : '') + (m.type==='known' ? (' ('+m.conc+(m.unit?(' '+m.unit):'')+')') : '');
+    octx.font = `${fontSize}px monospace`;
+    const tw = octx.measureText(label).width;
+    octx.fillStyle = 'rgba(0,0,0,.62)';
+    octx.fillRect(cx-tw/2-8, cy-rr-fontSize-14, tw+16, fontSize+10);
+    octx.fillStyle = '#ffffff';
+    octx.fillText(label, cx-tw/2, cy-rr-10);
   });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  downloadBlob(csv, 'colorimeter_dataset.csv', 'text/csv');
-};
-document.getElementById('btnClearDataset').onclick = ()=>{
-  if(confirm('Clear all session-saved records? (Export first if you want to keep them.)')){
-    state.dataset = []; updateDatasetCounters();
-  }
-};
+  return out;
+}
+function downloadDataUrl(dataUrl, filename){
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
 function downloadBlob(content, filename, type){
   const blob = new Blob([content], {type});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+
+document.getElementById('btnSaveRecord').onclick = ()=>{
+  if(!state.fit){ toast('Run Analyze first'); return; }
+  let raw = prompt('Save as — file name (no extension). The image and the CSV will both use this name:', 'reading_'+(state.dataset.length+1));
+  if(raw===null) return; // user cancelled
+  const name = sanitizeFilename(raw.trim());
+
+  // 1) Marked-up image, full resolution
+  const annotated = drawAnnotatedImage();
+  downloadDataUrl(annotated.toDataURL('image/png'), name+'.png');
+
+  // 2) CSV — same name, no timestamp column
+  const rows = [['marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration','fit_channel','fit_metric','fit_slope','fit_intercept','fit_r2']];
+  state.markers.filter(m=>m.sampled).forEach(m=>{
+    rows.push([
+      m.id, m.type, JSON.stringify(m.label||''), m.unit||'',
+      m.sampled.r.toFixed(2), m.sampled.g.toFixed(2), m.sampled.b.toFixed(2),
+      m.sampled.L.toFixed(2), m.sampled.a.toFixed(2), m.sampled.bLab.toFixed(2),
+      m.response!=null ? m.response.toFixed(4) : '',
+      isFinite(m.resultConc) ? m.resultConc.toFixed(4) : '',
+      state.fit.channel, state.fit.metric, state.fit.slope, state.fit.intercept, state.fit.r2
+    ]);
+  });
+  downloadBlob(rows.map(r=>r.join(',')).join('\n'), name+'.csv', 'text/csv');
+
+  // Also keep a lightweight in-memory record so multiple saves this session can still be bulk-exported below
+  state.dataset.push({
+    id: name,
+    fit: state.fit,
+    markers: state.markers.filter(m=>m.sampled).map(m=>({
+      markerId: m.id, type: m.type, label: m.label, unit: m.unit,
+      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab,
+      response: m.response, concentration: isFinite(m.resultConc) ? m.resultConc : null
+    }))
+  });
+  updateDatasetCounters();
+  toast('Saved '+name+'.png and '+name+'.csv');
+};
+
+document.getElementById('btnExportJSON').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  downloadBlob(JSON.stringify(state.dataset, null, 2), 'colorimeter_dataset.json', 'application/json');
+};
+document.getElementById('btnExportCSV').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  const rows = [['record_id','fit_channel','fit_metric','fit_slope','fit_intercept','fit_r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration']];
+  state.dataset.forEach(rec=>{
+    rec.markers.forEach(m=>{
+      rows.push([rec.id, rec.fit.channel, rec.fit.metric, rec.fit.slope, rec.fit.intercept, rec.fit.r2,
+        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
+    });
+  });
+  downloadBlob(rows.map(r=>r.join(',')).join('\n'), 'colorimeter_dataset.csv', 'text/csv');
+};
+document.getElementById('btnClearDataset').onclick = ()=>{
+  if(confirm('Clear all session-saved records? (Export first if you want to keep them.)')){
+    state.dataset = []; updateDatasetCounters();
+  }
+};
 
 /* ============================= NAV ============================= */
 document.getElementById('btnBackToMark').onclick = ()=>setStep(2);

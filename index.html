@@ -1,1488 +1,971 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Colorimeter</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        :root {
-            --bg: #F7F5EF;
-            --panel: #FFFFFF;
-            --line: #DDD6C4;
-            --text: #1C231D;
-            --muted: #5E6B5F;
-            --accent: #178A6E;
-            --accent-dim: #D7EFE7;
-            --accent-2: #B4650B;
-            --danger: #B5392A;
-            --lcd-accent: #4FD1AE;
-            --radius: 10px;
-        }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .app {
-            max-width: 1180px;
-            margin: 0 auto;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            gap: 14px;
-            padding-bottom: 18px;
-            border-bottom: 1px solid #E8E2D2;
-        }
-        .brand h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-        .brand p {
-            color: var(--muted);
-            font-size: 13px;
-        }
-        .steps {
-            display: flex;
-            gap: 6px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-        }
-        .step {
-            padding: 8px 12px;
-            color: #8B9689;
-            border-bottom: 2px solid transparent;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .step .n {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-        .step.active {
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-        .step.active .n {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .step.done {
-            color: var(--text);
-        }
-        .step.done .n {
-            background: var(--accent-dim);
-            border-color: var(--accent-dim);
-        }
-
-        .view {
-            display: none;
-            padding-top: 24px;
-        }
-        .view.active {
-            display: block;
-        }
-
-        .card {
-            background: var(--panel);
-            border: 1px solid #E8E2D2;
-            border-radius: var(--radius);
-            padding: 18px;
-        }
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        @media (max-width:640px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .tile {
-            border: 1px dashed var(--line);
-            border-radius: var(--radius);
-            padding: 28px 16px;
-            text-align: center;
-            cursor: pointer;
-            background: var(--panel);
-            transition: border-color .15s;
-        }
-        .tile:hover {
-            border-color: var(--accent);
-        }
-        .tile h3 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 15px;
-            margin: 8px 0 4px;
-        }
-        .tile p {
-            color: var(--muted);
-            font-size: 12.5px;
-        }
-        .tile .icon {
-            width: 40px;
-            height: 40px;
-            color: var(--accent);
-        }
-
-        video#camStream {
-            width: 100%;
-            max-height: 50vh;
-            border-radius: var(--radius);
-            background: #000;
-        }
-        .cam-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 500;
-            font-size: 13px;
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: 1px solid var(--line);
-            background: #F5F2EA;
-            color: var(--text);
-            cursor: pointer;
-            transition: all .15s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn:hover {
-            border-color: var(--accent);
-        }
-        .btn-primary {
-            background: var(--accent);
-            color: #08130f;
-            border-color: var(--accent);
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background: #5fe0bd;
-        }
-        .btn-danger {
-            border-color: var(--danger);
-            color: var(--danger);
-            background: transparent;
-        }
-        .btn-danger:hover {
-            background: rgba(232, 96, 76, .08);
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 11px;
-        }
-
-        .workspace {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 18px;
-            align-items: start;
-        }
-        @media (max-width:900px) {
-            .workspace {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .canvas-wrap {
-            background: #EFEBE1;
-            border: 1px solid #E8E2D2;
-            border-radius: var(--radius);
-            padding: 12px;
-        }
-        #displayCanvas {
-            width: 100%;
-            height: auto;
-            border-radius: 6px;
-            cursor: crosshair;
-            display: block;
-            touch-action: none;
-        }
-        .canvas-help {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 8px;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        .marker-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 220px;
-            overflow-y: auto;
-        }
-        .marker-item {
-            border: 1px solid #E8E2D2;
-            border-radius: 6px;
-            padding: 8px 10px;
-            cursor: pointer;
-            background: #F5F2EA;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-        }
-        .marker-item.selected {
-            border-color: var(--accent);
-            background: rgba(23, 138, 110, .08);
-        }
-        .marker-item .swatch {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, .25);
-            flex-shrink: 0;
-        }
-        .marker-item .tag {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 9px;
-            padding: 1px 7px;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        .tag.known {
-            background: rgba(23, 138, 110, .13);
-            color: var(--accent);
-        }
-        .tag.unknown {
-            background: rgba(180, 101, 11, .13);
-            color: var(--accent-2);
-        }
-        .tag.reference {
-            background: rgba(94, 107, 95, .13);
-            color: var(--muted);
-        }
-        .marker-item .mi-main {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            overflow: hidden;
-        }
-        .marker-item .mi-del {
-            color: #8B9689;
-            padding: 0 4px;
-            cursor: pointer;
-        }
-        .marker-item .mi-del:hover {
-            color: var(--danger);
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-bottom: 10px;
-        }
-        .field label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: var(--muted);
-        }
-        .field input,
-        .field select {
-            background: #F5F2EA;
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            padding: 7px 10px;
-            font-size: 12px;
-            font-family: 'Inter', sans-serif;
-        }
-        .field input:focus,
-        .field select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        .seg {
-            display: flex;
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .seg button {
-            flex: 1;
-            padding: 6px 4px;
-            background: #F5F2EA;
-            border: none;
-            color: var(--muted);
-            font-size: 10px;
-            font-family: 'Space Grotesk', sans-serif;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        .seg button.on {
-            background: var(--accent);
-            color: #08130f;
-            font-weight: 600;
-        }
-        .seg button.on.unk {
-            background: var(--accent-2);
-            color: #241800;
-        }
-        .seg button.on.ref {
-            background: var(--muted);
-            color: #fff;
-        }
-        .row-2 {
-            display: grid;
-            grid-template-columns: 1fr 80px;
-            gap: 8px;
-        }
-
-        .lcd {
-            background: linear-gradient(180deg, #0c1611, #08110d);
-            border: 1px solid #E8E2D2;
-            border-radius: 8px;
-            padding: 12px 14px;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-        .lcd .lcd-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #5f7669;
-            letter-spacing: .05em;
-        }
-        .lcd .lcd-main {
-            font-size: 20px;
-            color: var(--lcd-accent);
-            text-shadow: 0 0 12px rgba(79, 209, 174, .35);
-        }
-        .lcd .lcd-sub {
-            font-size: 11px;
-            color: #8CA398;
-            margin-top: 4px;
-        }
-
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1.1fr .9fr;
-            gap: 18px;
-        }
-        @media (max-width:900px) {
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        #chartCanvas {
-            width: 100%;
-            height: 280px;
-            background: #EFEBE1;
-            border: 1px solid #E8E2D2;
-            border-radius: var(--radius);
-        }
-        .res-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-        .res-table th {
-            text-align: left;
-            color: var(--muted);
-            font-weight: 500;
-            font-size: 9px;
-            text-transform: uppercase;
-            padding: 6px 6px;
-            border-bottom: 1px solid #E8E2D2;
-        }
-        .res-table td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #E8E2D2;
-            vertical-align: middle;
-        }
-        .fit-summary {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-        }
-        .fit-summary .fs-l {
-            color: #8B9689;
-            font-size: 9px;
-            text-transform: uppercase;
-        }
-        .fit-summary .fs-v {
-            color: var(--accent);
-            font-size: 14px;
-        }
-        .warn {
-            color: var(--accent-2);
-            font-size: 12px;
-            margin-top: 6px;
-        }
-
-        .dataset-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid #E8E2D2;
-        }
-        .dataset-count {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            color: var(--muted);
-        }
-        .dataset-count b {
-            color: var(--accent);
-        }
-        .actions-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            opacity: 0;
-            pointer-events: none;
-            background: #F5F2EA;
-            border: 1px solid var(--accent-dim);
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            transition: opacity .2s, transform .2s;
-            z-index: 50;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .tips {
-            margin-top: 16px;
-            border: 1px solid #E8E2D2;
-            border-radius: var(--radius);
-            background: #EFEBE1;
-        }
-        .tips-head {
-            padding: 10px 14px;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 12px;
-            color: var(--accent);
-            display: flex;
-            justify-content: space-between;
-        }
-        .tips-body {
-            padding: 0 14px 14px;
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.6;
-            display: none;
-        }
-        .tips-body.open {
-            display: block;
-        }
-        .tips-body ul {
-            padding-left: 18px;
-            margin: 4px 0;
-        }
-
-        @media (max-width:640px) {
-            body {
-                padding: 12px;
-            }
-            .brand h1 {
-                font-size: 20px;
-            }
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .steps {
-                width: 100%;
-                justify-content: space-between;
-            }
-            .step {
-                padding: 6px 2px;
-                font-size: 9px;
-                flex: 1;
-                justify-content: center;
-            }
-            .workspace {
-                grid-template-columns: 1fr;
-            }
-            .lcd .lcd-main {
-                font-size: 17px;
-            }
-            .btn {
-                padding: 10px 14px;
-                font-size: 12px;
-            }
-            #chartCanvas {
-                height: 200px;
-            }
-            .dataset-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .dataset-bar>div {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
-            }
-            .dataset-bar .btn {
-                justify-content: center;
-            }
-            .actions-row {
-                flex-direction: column;
-            }
-            .actions-row .btn {
-                justify-content: center;
-            }
-            .toast {
-                width: calc(100% - 24px);
-                text-align: center;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Yellow Colorimeter · Polynomial Fit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F7F5EF;
+      --bg-2: #EFEBE1;
+      --panel: #FFFFFF;
+      --panel-2: #F5F2EA;
+      --line: #DDD6C4;
+      --line-soft: #E8E2D2;
+      --text: #1C231D;
+      --muted: #5E6B5F;
+      --muted-2: #8B9689;
+      --accent: #B4650B;        /* yellow-brown for yellow focus */
+      --accent-dim: #F3E1C8;
+      --accent-2: #178A6E;
+      --danger: #B5392A;
+      --lcd-accent: #F5A623;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Space Grotesk', sans-serif;
+      --body: 'Inter', sans-serif;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; }
+    body {
+      background: radial-gradient(1200px 600px at 15% -10%, rgba(180,101,11,0.06), transparent 60%), var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: var(--accent); color: #fff; }
+    .app-shell { max-width: 1180px; margin:0 auto; padding:20px 18px 60px; }
+    .topbar { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:6px 2px 22px; border-bottom:1px solid var(--line-soft); }
+    .brand { display:flex; flex-direction:column; gap:4px; }
+    .brand .mark { font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase; }
+    .brand h1 { font-family:var(--sans); font-weight:600; font-size:26px; margin:0; letter-spacing:-0.01em; }
+    .brand p { margin:0; color:var(--muted); font-size:13px; }
+    .steps { display:flex; gap:0; font-family:var(--mono); font-size:11px; }
+    .step { display:flex; align-items:center; gap:8px; padding:8px 14px; color:var(--muted-2); border-bottom:2px solid transparent; }
+    .step .n { width:18px; height:18px; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:10px; }
+    .step.active { color:var(--accent); border-color:var(--accent); }
+    .step.active .n { border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px rgba(180,101,11,.35); }
+    .step.done { color:var(--text); }
+    .step.done .n { border-color:var(--accent-dim); background:var(--accent-dim); color:#241800; }
+    .view { display:none; padding-top:28px; }
+    .view.active { display:block; }
+    .card { background:var(--panel); border:1px solid var(--line-soft); border-radius:var(--radius); padding:20px; }
+    .muted { color:var(--muted); }
+    h2.sec-title { font-family:var(--sans); font-size:15px; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); margin:0 0 14px; }
+    .btn {
+      font-family:var(--sans); font-weight:500; font-size:14px; letter-spacing:.01em;
+      padding:11px 20px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--text);
+      cursor:pointer; transition:border-color .15s, background .15s, transform .05s; display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn:hover { border-color:var(--accent); }
+    .btn:active { transform:scale(.98); }
+    .btn-primary { background:var(--accent); color:#241800; border-color:var(--accent); font-weight:600; }
+    .btn-primary:hover { background:#f5c542; }
+    .btn-danger { border-color:var(--danger); color:var(--danger); background:transparent; }
+    .btn-danger:hover { background:rgba(232,96,76,.08); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-sm { padding:7px 12px; font-size:12px; }
+    .capture-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px; }
+    @media (max-width:640px) { .capture-grid { grid-template-columns:1fr; } }
+    .capture-tile {
+      border:1px dashed var(--line); border-radius:var(--radius); padding:32px 20px; text-align:center;
+      display:flex; flex-direction:column; align-items:center; gap:12px; cursor:pointer; background:var(--panel);
+      transition:border-color .15s, background .15s;
+    }
+    .capture-tile:hover { border-color:var(--accent); background:var(--panel-2); }
+    .capture-tile .icon { width:44px; height:44px; color:var(--accent); }
+    .capture-tile h3 { margin:0; font-family:var(--sans); font-size:16px; }
+    .capture-tile p { margin:0; color:var(--muted); font-size:12.5px; max-width:220px; }
+    video#camStream { width:100%; max-height:60vh; border-radius:var(--radius); background:#000; }
+    .camera-panel { margin-top:16px; display:none; }
+    .camera-actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .workspace { display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start; }
+    @media (max-width:900px) { .workspace { grid-template-columns:1fr; } }
+    .canvas-wrap { background:var(--bg-2); border:1px solid var(--line-soft); border-radius:var(--radius); padding:14px; position:relative; }
+    #displayCanvas { width:100%; height:auto; border-radius:6px; cursor:crosshair; touch-action:none; display:block; }
+    .canvas-help { font-size:12px; color:var(--muted); margin-top:10px; font-family:var(--mono); }
+    .side { display:flex; flex-direction:column; gap:14px; }
+    .marker-list { display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; padding-right:2px; }
+    .marker-item {
+      border:1px solid var(--line-soft); border-radius:8px; padding:10px 12px; cursor:pointer; background:var(--bg-2);
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+    }
+    .marker-item.selected { border-color:var(--accent); background:rgba(180,101,11,.08); }
+    .marker-item .tag { font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:20px; letter-spacing:.04em; }
+    .tag.known { background:rgba(180,101,11,.13); color:var(--accent); }
+    .tag.unknown { background:rgba(23,138,110,.13); color:var(--accent-2); }
+    .tag.reference { background:rgba(94,107,95,.13); color:var(--muted); }
+    .marker-item .swatch { width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.25); flex-shrink:0; }
+    .marker-item .mi-main { display:flex; align-items:center; gap:9px; overflow:hidden; }
+    .marker-item .mi-label { font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .marker-item .mi-del { color:var(--muted-2); font-size:14px; padding:2px 6px; }
+    .marker-item .mi-del:hover { color:var(--danger); }
+    .field { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+    .field label { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+    .field select, .field input {
+      background:var(--bg-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:8px 10px; font-size:13px; font-family:var(--body);
+    }
+    .field select:focus, .field input:focus { outline:none; border-color:var(--accent); }
+    .seg { display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+    .seg button { flex:1; padding:8px 6px; background:var(--bg-2); border:none; color:var(--muted); font-size:11.5px; font-family:var(--sans); cursor:pointer; }
+    .seg button.on { background:var(--accent); color:#241800; font-weight:600; }
+    .seg button.on.unk { background:var(--accent-2); color:#08130f; }
+    .seg button.on.ref { background:var(--muted); color:#0b120e; }
+    .row-2 { display:grid; grid-template-columns:1fr 90px; gap:8px; }
+    .lcd {
+      background:linear-gradient(180deg, #1c1a12, #12100b);
+      border:1px solid var(--line-soft); border-radius:8px; padding:14px 16px;
+      font-family:var(--mono); position:relative; overflow:hidden;
+    }
+    .lcd .lcd-row { display:flex; justify-content:space-between; font-size:11px; color:#9a8b78; margin-bottom:4px; letter-spacing:.05em; }
+    .lcd .lcd-main { font-size:22px; color:var(--lcd-accent); text-shadow:0 0 12px rgba(245,166,35,.45); letter-spacing:.02em; }
+    .lcd .lcd-sub { font-size:12px; color:#bba88a; margin-top:6px; }
+    hr.div { border:none; border-top:1px solid var(--line-soft); margin:14px 0; }
+    .results-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:18px; align-items:start; }
+    @media (max-width:900px) { .results-grid { grid-template-columns:1fr; } }
+    #chartCanvas { width:100%; height:320px; background:var(--bg-2); border:1px solid var(--line-soft); border-radius:var(--radius); }
+    table.res-table { width:100%; border-collapse:collapse; font-size:12.5px; font-family:var(--mono); }
+    table.res-table th { text-align:left; color:var(--muted); font-weight:500; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:8px 8px; border-bottom:1px solid var(--line-soft); }
+    table.res-table td { padding:9px 8px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+    .fit-summary { display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-family:var(--mono); font-size:12px; }
+    .fit-summary .fs-item .fs-l { color:var(--muted-2); font-size:10px; text-transform:uppercase; }
+    .fit-summary .fs-item .fs-v { color:var(--accent); font-size:15px; }
+    .warn { color:var(--danger); font-size:12px; margin-top:8px; font-family:var(--body); }
+    .dataset-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line-soft); }
+    .dataset-count { font-family:var(--mono); font-size:12px; color:var(--muted); }
+    .dataset-count b { color:var(--accent); }
+    .actions-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .toast {
+      position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
+      background:var(--panel-2); border:1px solid var(--accent-dim); color:var(--text); padding:11px 18px; border-radius:8px; font-size:13px;
+      font-family:var(--body); transition:opacity .2s, transform .2s; z-index:50; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-thumb { background:var(--line); border-radius:4px; }
+    .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .table-scroll table { min-width:480px; }
+    @media (max-width:640px) {
+      .app-shell { padding:14px 12px 44px; }
+      .topbar { flex-direction:column; align-items:flex-start; padding:4px 0 16px; gap:12px; }
+      .brand h1 { font-size:20px; line-height:1.25; }
+      .brand p { font-size:12.5px; }
+      .steps { width:100%; justify-content:space-between; }
+      .step { padding:8px 4px; font-size:10px; gap:5px; flex:1; justify-content:center; }
+      .view { padding-top:18px; }
+      .card { padding:15px; }
+      h2.sec-title { font-size:13px; }
+      .capture-tile { padding:24px 14px; }
+      .capture-tile .icon { width:36px; height:36px; }
+      .capture-tile h3 { font-size:15px; }
+      video#camStream { max-height:42vh; }
+      .camera-actions .btn { flex:1 1 auto; justify-content:center; }
+      .canvas-wrap { padding:10px; }
+      .lcd { padding:12px 13px; }
+      .lcd .lcd-main { font-size:18px; }
+      .row-2 { grid-template-columns:1fr 82px; gap:6px; }
+      .seg button { padding:9px 4px; font-size:10.5px; }
+      .field select, .field input { font-size:16px; }
+      .btn { padding:12px 16px; font-size:13.5px; }
+      .btn-sm { padding:10px 14px; font-size:12px; }
+      .results-grid { gap:14px; }
+      #chartCanvas { height:240px; }
+      table.res-table { font-size:11px; }
+      table.res-table th, table.res-table td { padding:7px 6px; }
+      .fit-summary { gap:12px 20px; }
+      .dataset-bar { flex-direction:column; align-items:stretch; gap:12px; }
+      .dataset-bar > div { display:grid !important; grid-template-columns:1fr 1fr; gap:8px; }
+      .dataset-bar .btn { justify-content:center; width:100%; }
+      .actions-row { flex-direction:column; }
+      .actions-row .btn { justify-content:center; width:100%; }
+      .toast { width:calc(100% - 32px); text-align:center; }
+    }
+  </style>
 </head>
 <body>
-    <div class="app">
-        <div class="topbar">
-            <div class="brand">
-                <h1>Colorimeter</h1>
-                <p>Concentration from color intensity</p>
-            </div>
-            <div class="steps" id="stepsBar">
-                <div class="step active" data-step="1"><span class="n">1</span> Capture</div>
-                <div class="step" data-step="2"><span class="n">2</span> Mark</div>
-                <div class="step" data-step="3"><span class="n">3</span> Results</div>
-            </div>
-        </div>
+<div class="app-shell">
 
-        <!-- STEP 1 -->
-        <div class="view active" id="view-capture">
-            <div class="grid-2">
-                <div class="tile" id="tileCamera">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 8.9 4h6.2a1 1 0 0 1 .8.6L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg>
-                    <h3>Open Camera</h3>
-                    <p>Take a photo with standards + sample in one frame</p>
-                </div>
-                <div class="tile" id="tileUpload">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3M12 3v12M7 8l5-5 5 5"/></svg>
-                    <h3>Upload Image</h3>
-                    <p>Use an existing photo from your gallery</p>
-                </div>
-                <input type="file" id="fileInput" accept="image/*" style="display:none">
-            </div>
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">Yellow Colorimeter · polynomial</span>
+      <h1>Concentration from yellow intensity</h1>
+      <p>Photograph yellow standards + sample, mark them, get calibrated reading (polynomial fit).</p>
+    </div>
+    <div class="steps" id="stepsBar">
+      <div class="step active" data-step="1"><span class="n">1</span> Capture</div>
+      <div class="step" data-step="2"><span class="n">2</span> Mark</div>
+      <div class="step" data-step="3"><span class="n">3</span> Results</div>
+    </div>
+  </div>
 
-            <div class="card" id="cameraPanel" style="display:none; margin-top:16px;">
-                <video id="camStream" autoplay playsinline muted></video>
-                <div class="cam-actions">
-                    <button class="btn btn-primary" id="btnCapture">Capture</button>
-                    <button class="btn" id="btnCancelCam">Cancel</button>
-                </div>
-                <p class="warn" id="camError" style="display:none;"></p>
-            </div>
-
-            <div class="tips">
-                <div class="tips-head" id="tipsToggle"><span>⚠ Tips for accurate readings</span><span id="tipsChevron">+</span></div>
-                <div class="tips-body" id="tipsBody">
-                    <ul>
-                        <li><b>Same photo, same light:</b> All standards + unknown must be in one image.</li>
-                        <li><b>Add a white reference</b> patch (e.g. white card) and mark it as "Reference".</li>
-                        <li><b>Use 3–5 known standards</b> spanning your expected concentration range.</li>
-                        <li>Keep phone steady, avoid glare, use diffuse daylight or consistent indoor light.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 2 -->
-        <div class="view" id="view-mark">
-            <div class="workspace">
-                <div class="canvas-wrap">
-                    <canvas id="displayCanvas"></canvas>
-                    <p class="canvas-help">Tap to drop a marker · Tap a marker to select · Drag to reposition</p>
-                </div>
-                <div>
-                    <div class="card" style="margin-bottom:12px;">
-                        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500;margin-bottom:8px;">
-                            <span>Markers <span class="muted" id="markerCountLbl">(0)</span></span>
-                        </div>
-                        <div class="marker-list" id="markerList"></div>
-                        <hr style="border:none;border-top:1px solid #E8E2D2;margin:10px 0;">
-                        <div id="editorEmpty" style="font-size:12px;color:var(--muted);">Select or add a marker to edit</div>
-                        <div id="editor" style="display:none;">
-                            <div class="field">
-                                <label>Type</label>
-                                <div class="seg">
-                                    <button type="button" data-type="known" id="segKnown">Known</button>
-                                    <button type="button" data-type="unknown" id="segUnknown" class="on unk">Unknown</button>
-                                    <button type="button" data-type="reference" id="segReference">Reference</button>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label>Label</label>
-                                <input type="text" id="inpLabel" placeholder="e.g. Std 25 mg/L">
-                            </div>
-                            <div class="row-2" id="concField">
-                                <div class="field" style="margin-bottom:0;">
-                                    <label>Known concentration</label>
-                                    <input type="number" step="any" id="inpConc" placeholder="e.g. 25">
-                                </div>
-                                <div class="field" style="margin-bottom:0;">
-                                    <label>Unit</label>
-                                    <input type="text" id="inpUnit" placeholder="mg/L" value="mg/L">
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label>Marker size</label>
-                                <input type="range" id="inpRadius" min="1" max="12" step="0.5" value="4">
-                            </div>
-                            <button class="btn btn-danger btn-sm" id="btnDeleteMarker" style="width:100%;justify-content:center;">Delete marker</button>
-                        </div>
-                    </div>
-
-                    <div class="lcd" id="lcdBox">
-                        <div class="lcd-row"><span>LIVE READOUT</span><span id="lcdMarkerId">—</span></div>
-                        <div class="lcd-main" id="lcdMain">R -- G -- B --</div>
-                        <div class="lcd-sub" id="lcdSub">Tap a marker to sample color</div>
-                    </div>
-
-                    <div class="card" style="margin-top:12px;">
-                        <div class="field" style="margin-bottom:6px;">
-                            <label>Response channel</label>
-                            <select id="selChannel">
-                                <option value="lum">Luminance</option>
-                                <option value="r">Red</option>
-                                <option value="g">Green</option>
-                                <option value="b">Blue</option>
-                                <option value="labL">Lab L*</option>
-                                <option value="laba">Lab a*</option>
-                                <option value="labb">Lab b*</option>
-                            </select>
-                        </div>
-                        <div class="field" style="margin-bottom:0;">
-                            <label>Fit against</label>
-                            <select id="selMetric">
-                                <option value="absorbance">Absorbance (−log₁₀ I/255)</option>
-                                <option value="intensity">Raw intensity</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-primary" id="btnAnalyze" style="width:100%;justify-content:center;margin-top:12px;">Analyze →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 3 -->
-        <div class="view" id="view-results">
-            <div class="results-grid">
-                <div class="card">
-                    <h2 style="font-size:13px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Calibration curve</h2>
-                    <canvas id="chartCanvas"></canvas>
-                    <div class="fit-summary" id="fitSummary"></div>
-                    <p class="warn" id="fitWarning" style="display:none;"></p>
-                </div>
-                <div class="card">
-                    <h2 style="font-size:13px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Readings</h2>
-                    <div style="overflow-x:auto;">
-                        <table class="res-table" id="resTable">
-                            <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Response</th><th>Conc.</th></tr></thead>
-                            <tbody id="resTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top:16px;">
-                <h2 style="font-size:13px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Dataset</h2>
-                <p style="font-size:12px;color:var(--muted);">Save as image + CSV pair. Bulk export all saved records below.</p>
-                <div class="dataset-bar">
-                    <span class="dataset-count">Saved: <b id="datasetCount">0</b> records, <b id="datasetMarkerCount">0</b> markers</span>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button class="btn btn-sm" id="btnSaveRecord">Save (image + CSV)</button>
-                        <button class="btn btn-sm" id="btnExportJSON">Export JSON</button>
-                        <button class="btn btn-sm" id="btnExportCSV">Export CSV</button>
-                        <button class="btn btn-sm btn-danger" id="btnClearDataset">Clear</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="actions-row">
-                <button class="btn" id="btnBackToMark">← Back</button>
-                <button class="btn" id="btnNewAnalysis">New photo</button>
-            </div>
-        </div>
+  <!-- STEP 1: CAPTURE -->
+  <div class="view active" id="view-capture">
+    <div class="capture-grid">
+      <div class="capture-tile" id="tileCamera">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 8.9 4h6.2a1 1 0 0 1 .8.6L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg>
+        <h3>Open camera</h3>
+        <p>Take a fresh photo — keep standards and sample in one frame, same lighting.</p>
+      </div>
+      <div class="capture-tile" id="tileUpload">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3M12 3v12M7 8l5-5 5 5"/></svg>
+        <h3>Upload image</h3>
+        <p>Use an existing photo from your gallery.</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="camera-panel" id="cameraPanel">
+      <video id="camStream" autoplay playsinline muted></video>
+      <div class="camera-actions">
+        <button class="btn btn-primary" id="btnCapture">Capture photo</button>
+        <button class="btn" id="btnCancelCam">Cancel</button>
+      </div>
+      <p class="warn" id="camError" style="display:none;"></p>
+    </div>
+  </div>
 
-    <script>
-        // ===== STATE =====
-        const state = {
-            sourceCanvas: document.createElement('canvas'),
-            sourceCtx: null,
-            imageData: null,
-            imgW: 0,
-            imgH: 0,
-            markers: [],
-            selectedId: null,
-            nextId: 1,
-            fit: null,
-            camStream: null,
-            dataset: []
-        };
-        state.sourceCtx = state.sourceCanvas.getContext('2d', { willReadFrequently: true });
+  <!-- STEP 2: MARK -->
+  <div class="view" id="view-mark">
+    <div class="workspace">
+      <div class="canvas-wrap">
+        <canvas id="displayCanvas"></canvas>
+        <p class="canvas-help">Tap on a standard/sample to drop a marker. Tap an existing marker to select &amp; edit. Drag to reposition.</p>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2 class="sec-title">Markers <span class="muted" id="markerCountLbl">(0)</span></h2>
+          <div class="marker-list" id="markerList"></div>
+          <hr class="div">
+          <div id="editorEmpty" class="muted" style="font-size:12.5px;">Select or add a marker to edit it.</div>
+          <div id="editor" style="display:none;">
+            <div class="field">
+              <label>Type</label>
+              <div class="seg">
+                <button type="button" data-type="known" id="segKnown">Known</button>
+                <button type="button" data-type="unknown" id="segUnknown">Unknown</button>
+                <button type="button" data-type="reference" id="segReference">Reference</button>
+              </div>
+            </div>
+            <div class="field" id="labelField">
+              <label>Label</label>
+              <input type="text" id="inpLabel" placeholder="e.g. Std 25 mg/L">
+            </div>
+            <div class="row-2" id="concField">
+              <div class="field" style="margin-bottom:0;">
+                <label>Known concentration</label>
+                <input type="number" step="any" id="inpConc" placeholder="e.g. 25">
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label>Unit</label>
+                <input type="text" id="inpUnit" placeholder="mg/L" value="mg/L">
+              </div>
+            </div>
+            <div class="field">
+              <label>Marker size</label>
+              <input type="range" id="inpRadius" min="1" max="12" step="0.5" value="4">
+            </div>
+            <button class="btn btn-danger btn-sm" id="btnDeleteMarker" style="width:100%; justify-content:center;">Delete marker</button>
+          </div>
+        </div>
 
-        const displayCanvas = document.getElementById('displayCanvas');
-        const dctx = displayCanvas.getContext('2d');
+        <div class="lcd" id="lcdBox">
+          <div class="lcd-row"><span>LIVE READOUT</span><span id="lcdMarkerId">— NO MARKER —</span></div>
+          <div class="lcd-main" id="lcdMain">R -- G -- B --</div>
+          <div class="lcd-sub" id="lcdSub">Add markers to sample color</div>
+        </div>
 
-        // ===== UTILITY =====
-        function toast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(toast._h);
-            toast._h = setTimeout(() => t.classList.remove('show'), 2400);
-        }
+        <div class="card">
+          <div class="field">
+            <label>Response channel (yellow intensity)</label>
+            <select id="selChannel">
+              <option value="lum">Luminance (recommended for yellow)</option>
+              <option value="r">Red channel</option>
+              <option value="g">Green channel</option>
+              <option value="b">Blue channel</option>
+              <option value="labL">Lab L*</option>
+              <option value="laba">Lab a*</option>
+              <option value="labb">Lab b*</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Fit type</label>
+            <select id="selFitType">
+              <option value="poly2">Polynomial degree 2 (quadratic)</option>
+              <option value="poly3">Polynomial degree 3 (cubic)</option>
+              <option value="linear">Linear (for comparison)</option>
+            </select>
+          </div>
+        </div>
 
-        function setStep(n) {
-            document.querySelectorAll('.step').forEach(s => {
-                const sn = +s.dataset.step;
-                s.classList.toggle('active', sn === n);
-                s.classList.toggle('done', sn < n);
-            });
-            ['view-capture', 'view-mark', 'view-results'].forEach((id, i) => {
-                document.getElementById(id).classList.toggle('active', i + 1 === n);
-            });
-        }
+        <button class="btn btn-primary" id="btnAnalyze" style="width:100%; justify-content:center;">Analyze &amp; calibrate →</button>
+      </div>
+    </div>
+  </div>
 
-        function rgbToHex(r, g, b) {
-            return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
-        }
+  <!-- STEP 3: RESULTS -->
+  <div class="view" id="view-results">
+    <div class="results-grid">
+      <div class="card">
+        <h2 class="sec-title">Calibration curve (polynomial)</h2>
+        <canvas id="chartCanvas"></canvas>
+        <div class="fit-summary" id="fitSummary"></div>
+        <p class="warn" id="fitWarning" style="display:none;"></p>
+      </div>
+      <div class="card">
+        <h2 class="sec-title">Readings</h2>
+        <div class="table-scroll">
+        <table class="res-table" id="resTable">
+          <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Response</th><th>Conc.</th></tr></thead>
+          <tbody id="resTableBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
 
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
-                "'": '&#39;' }[c] || c));
-        }
+    <div class="card" style="margin-top:18px;">
+      <h2 class="sec-title">ML dataset (this session)</h2>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px;">"Save" downloads a PNG with markers and a CSV with all data + polynomial coefficients. Every save is kept in session for bulk export.</p>
+      <div class="dataset-bar">
+        <span class="dataset-count">Saved: <b id="datasetCount">0</b> records, <b id="datasetMarkerCount">0</b> marker rows</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-sm" id="btnSaveRecord">Save (image + CSV)</button>
+          <button class="btn btn-sm" id="btnExportJSON">Export all — JSON</button>
+          <button class="btn btn-sm" id="btnExportCSV">Export all — CSV</button>
+          <button class="btn btn-sm btn-danger" id="btnClearDataset">Clear session</button>
+        </div>
+      </div>
+    </div>
 
-        // ===== COLOR SCIENCE =====
-        function srgbToLinear(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+    <div class="actions-row">
+      <button class="btn" id="btnBackToMark">← Back to markers</button>
+      <button class="btn" id="btnNewAnalysis">Start a new photo</button>
+    </div>
+  </div>
 
-        function rgbToXyz(r, g, b) {
-            const R = srgbToLinear(r),
-                G = srgbToLinear(g),
-                B = srgbToLinear(b);
-            return [
-                R * 0.4124564 + G * 0.3575761 + B * 0.1804375,
-                R * 0.2126729 + G * 0.7151522 + B * 0.0721750,
-                R * 0.0193339 + G * 0.1191920 + B * 0.9503041
-            ];
-        }
+</div>
 
-        function xyzToLab(X, Y, Z) {
-            const Xn = 0.95047,
-                Yn = 1.0,
-                Zn = 1.08883;
-            const f = t => t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16 / 116);
-            const fx = f(X / Xn),
-                fy = f(Y / Yn),
-                fz = f(Z / Zn);
-            return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
-        }
+<div class="toast" id="toast"></div>
 
-        function rgbToLab(r, g, b) { const [x, y, z] = rgbToXyz(r, g, b); return xyzToLab(x, y, z); }
+<script>
+/* ============================= STATE ============================= */
+const state = {
+  sourceCanvas: document.createElement('canvas'),
+  sourceCtx: null,
+  imageData: null,
+  imgW: 0, imgH: 0,
+  markers: [],
+  selectedId: null,
+  nextId: 1,
+  fit: null,
+  dataset: [],
+  camStream: null,
+  fitType: 'poly2'
+};
 
-        function luminance(r, g, b) { return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+const displayCanvas = document.getElementById('displayCanvas');
+const dctx = displayCanvas.getContext('2d');
+state.sourceCtx = state.sourceCanvas.getContext('2d', {willReadFrequently:true});
 
-        // ===== IMAGE LOADING =====
-        function loadImageToSource(imgEl) {
-            const MAX_DIM = 1600;
-            let w = imgEl.naturalWidth || imgEl.videoWidth,
-                h = imgEl.naturalHeight || imgEl.videoHeight;
-            const scale = Math.min(1, MAX_DIM / Math.max(w, h));
-            w = Math.round(w * scale);
-            h = Math.round(h * scale);
-            state.sourceCanvas.width = w;
-            state.sourceCanvas.height = h;
-            state.sourceCtx.drawImage(imgEl, 0, 0, w, h);
-            state.imgW = w;
-            state.imgH = h;
-            state.imageData = state.sourceCtx.getImageData(0, 0, w, h);
-            state.markers = [];
-            state.selectedId = null;
-            state.fit = null;
-            redrawDisplay();
-            renderMarkerList();
-            showEditor(null);
-            setStep(2);
-            stopCamera();
-        }
+/* ============================= UTIL ============================= */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function setStep(n) {
+  document.querySelectorAll('.step').forEach(s=>{
+    const sn = +s.dataset.step;
+    s.classList.toggle('active', sn===n);
+    s.classList.toggle('done', sn<n);
+  });
+  document.getElementById('view-capture').classList.toggle('active', n===1);
+  document.getElementById('view-mark').classList.toggle('active', n===2);
+  document.getElementById('view-results').classList.toggle('active', n===3);
+}
 
-        function redrawDisplay() {
-            const maxW = 720;
-            const scale = Math.min(1, maxW / state.imgW);
-            displayCanvas.width = Math.round(state.imgW * scale);
-            displayCanvas.height = Math.round(state.imgH * scale);
-            dctx.drawImage(state.sourceCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
-            state.markers.forEach(m => {
-                const cx = m.x * displayCanvas.width,
-                    cy = m.y * displayCanvas.height;
-                const rr = m.r * Math.min(displayCanvas.width, displayCanvas.height);
-                dctx.beginPath();
-                dctx.arc(cx, cy, rr, 0, Math.PI * 2);
-                dctx.lineWidth = (m.id === state.selectedId) ? 3 : 2;
-                dctx.strokeStyle = m.type === 'known' ? '#4FD1AE' : m.type === 'reference' ? '#8CA398' : '#F5A623';
-                dctx.stroke();
-                dctx.fillStyle = 'rgba(0,0,0,.5)';
-                dctx.font = '10px monospace';
-                const tag = '#' + m.id;
-                const tw = dctx.measureText(tag).width;
-                dctx.fillRect(cx - tw / 2 - 4, cy - rr - 18, tw + 8, 14);
-                dctx.fillStyle = '#E8EDE9';
-                dctx.fillText(tag, cx - tw / 2, cy - rr - 8);
-            });
-        }
+/* ============================= COLOR SCIENCE ============================= */
+function srgbToLinear(c){ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+function rgbToXyz(r,g,b){
+  const R=srgbToLinear(r), G=srgbToLinear(g), B=srgbToLinear(b);
+  return [R*0.4124564 + G*0.3575761 + B*0.1804375,
+          R*0.2126729 + G*0.7151522 + B*0.0721750,
+          R*0.0193339 + G*0.1191920 + B*0.9503041];
+}
+function xyzToLab(X,Y,Z){
+  const Xn=0.95047, Yn=1.0, Zn=1.08883;
+  const f = t => t>0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
+  const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
+  return [116*fy-16, 500*(fx-fy), 200*(fy-fz)];
+}
+function rgbToLab(r,g,b){ const [x,y,z]=rgbToXyz(r,g,b); return xyzToLab(x,y,z); }
+function luminance(r,g,b){ return 0.2126*r + 0.7152*g + 0.0722*b; }
 
-        // ===== SAMPLING =====
-        function sampleMarker(m) {
-            const w = state.imgW,
-                h = state.imgH,
-                data = state.imageData.data;
-            const cx = m.x * w,
-                cy = m.y * h,
-                r = m.r * Math.min(w, h);
-            const x0 = Math.max(0, Math.floor(cx - r)),
-                x1 = Math.min(w - 1, Math.ceil(cx + r));
-            const y0 = Math.max(0, Math.floor(cy - r)),
-                y1 = Math.min(h - 1, Math.ceil(cy + r));
-            let sr = 0,
-                sg = 0,
-                sb = 0,
-                n = 0;
-            for (let y = y0; y <= y1; y++) {
-                for (let x = x0; x <= x1; x++) {
-                    const dx = x - cx,
-                        dy = y - cy;
-                    if (dx * dx + dy * dy <= r * r) {
-                        const idx = (y * w + x) * 4;
-                        sr += data[idx];
-                        sg += data[idx + 1];
-                        sb += data[idx + 2];
-                        n++;
-                    }
-                }
-            }
-            return n ? { r: sr / n, g: sg / n, b: sb / n, n } : { r: 0, g: 0, b: 0, n: 0 };
-        }
+/* ============================= IMAGE LOADING ============================= */
+function loadImageToSource(imgEl) {
+  const MAX_DIM = 1600;
+  let w = imgEl.naturalWidth || imgEl.videoWidth, h = imgEl.naturalHeight || imgEl.videoHeight;
+  const scale = Math.min(1, MAX_DIM / Math.max(w,h));
+  w = Math.round(w*scale); h = Math.round(h*scale);
+  state.sourceCanvas.width = w; state.sourceCanvas.height = h;
+  state.sourceCtx.drawImage(imgEl, 0, 0, w, h);
+  state.imgW = w; state.imgH = h;
+  state.imageData = state.sourceCtx.getImageData(0,0,w,h);
+  state.markers = []; state.selectedId = null; state.fit = null;
+  redrawDisplay();
+  renderMarkerList();
+  showEditor(null);
+  setStep(2);
+  stopCamera();
+}
 
-        function sampleAllMarkers() {
-            const ref = state.markers.find(m => m.type === 'reference');
-            let corr = { r: 1, g: 1, b: 1 };
-            if (ref) {
-                const rs = sampleMarker(ref);
-                corr = { r: rs.r > 0 ? 255 / rs.r : 1, g: rs.g > 0 ? 255 / rs.g : 1, b: rs.b > 0 ? 255 / rs.b : 1 };
-            }
-            state.markers.forEach(m => {
-                const raw = sampleMarker(m);
-                let r = Math.min(255, raw.r * corr.r),
-                    g = Math.min(255, raw.g * corr.g),
-                    b = Math.min(255, raw.b * corr.b);
-                const [L, a, bb] = rgbToLab(r, g, b);
-                m.sampled = { r, g, b, L, a, bLab: bb, lum: luminance(r, g, b), rawR: raw.r, rawG: raw.g, rawB: raw
-                    .b };
-            });
-            return !!ref;
-        }
+function redrawDisplay() {
+  const maxW = 760;
+  const scale = Math.min(1, maxW / state.imgW);
+  displayCanvas.width = Math.round(state.imgW*scale);
+  displayCanvas.height = Math.round(state.imgH*scale);
+  dctx.drawImage(state.sourceCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+  state.markers.forEach(m=>{
+    const cx = m.x*displayCanvas.width, cy = m.y*displayCanvas.height;
+    const rr = m.r*Math.min(displayCanvas.width, displayCanvas.height);
+    dctx.beginPath();
+    dctx.arc(cx, cy, rr, 0, Math.PI*2);
+    dctx.lineWidth = (m.id===state.selectedId) ? 3 : 2;
+    dctx.strokeStyle = m.type==='known' ? '#F5A623' : m.type==='reference' ? '#8CA398' : '#178A6E';
+    dctx.stroke();
+    dctx.fillStyle = 'rgba(0,0,0,.55)';
+    dctx.font = '11px IBM Plex Mono, monospace';
+    const tagTxt = '#'+m.id;
+    const tw = dctx.measureText(tagTxt).width;
+    dctx.fillRect(cx-tw/2-4, cy-rr-20, tw+8, 16);
+    dctx.fillStyle = '#E8EDE9';
+    dctx.fillText(tagTxt, cx-tw/2, cy-rr-8);
+  });
+}
 
-        // ===== MARKER CRUD =====
-        function hitTestMarker(px, py) {
-            for (let i = state.markers.length - 1; i >= 0; i--) {
-                const m = state.markers[i];
-                const cx = m.x * displayCanvas.width,
-                    cy = m.y * displayCanvas.height;
-                const rr = m.r * Math.min(displayCanvas.width, displayCanvas.height);
-                const dx = px - cx,
-                    dy = py - cy;
-                if (dx * dx + dy * dy <= rr * rr) return m;
-            }
-            return null;
-        }
+/* ============================= SAMPLING ============================= */
+function sampleMarker(m) {
+  const w = state.imgW, h = state.imgH, data = state.imageData.data;
+  const cx = m.x*w, cy = m.y*h, r = m.r*Math.min(w,h);
+  const x0 = Math.max(0, Math.floor(cx-r)), x1 = Math.min(w-1, Math.ceil(cx+r));
+  const y0 = Math.max(0, Math.floor(cy-r)), y1 = Math.min(h-1, Math.ceil(cy+r));
+  let sr=0, sg=0, sb=0, n=0;
+  for(let y=y0; y<=y1; y++){
+    for(let x=x0; x<=x1; x++){
+      const dx=x-cx, dy=y-cy;
+      if(dx*dx+dy*dy <= r*r){
+        const idx = (y*w+x)*4;
+        sr += data[idx]; sg += data[idx+1]; sb += data[idx+2]; n++;
+      }
+    }
+  }
+  if(n===0) return {r:0,g:0,b:0,n:0};
+  return {r: sr/n, g: sg/n, b: sb/n, n};
+}
 
-        function addMarker(xRel, yRel) {
-            const m = { id: state.nextId++, x: xRel, y: yRel, r: 0.035, type: 'unknown', label: '', conc: '', unit: 'mg/L' };
-            state.markers.push(m);
-            selectMarker(m.id);
-            redrawDisplay();
-            renderMarkerList();
-        }
+function sampleAllMarkers() {
+  const ref = state.markers.find(m=>m.type==='reference');
+  let corr = {r:1,g:1,b:1};
+  if(ref){
+    const rs = sampleMarker(ref);
+    corr = { r: rs.r>0 ? 255/rs.r : 1, g: rs.g>0 ? 255/rs.g : 1, b: rs.b>0 ? 255/rs.b : 1 };
+  }
+  state.markers.forEach(m=>{
+    const raw = sampleMarker(m);
+    let r = Math.min(255, raw.r*corr.r), g = Math.min(255, raw.g*corr.g), b = Math.min(255, raw.b*corr.b);
+    const [L,a,bb] = rgbToLab(r,g,b);
+    m.sampled = { r, g, b, L, a, bLab: bb, lum: luminance(r,g,b), rawR: raw.r, rawG: raw.g, rawB: raw.b };
+  });
+  return !!ref;
+}
 
-        function selectMarker(id) {
-            state.selectedId = id;
-            redrawDisplay();
-            renderMarkerList();
-            showEditor(state.markers.find(m => m.id === id));
-        }
+/* ============================= MARKER CRUD ============================= */
+function hitTestMarker(px, py) {
+  for(let i=state.markers.length-1; i>=0; i--){
+    const m = state.markers[i];
+    const cx = m.x*displayCanvas.width, cy = m.y*displayCanvas.height;
+    const rr = m.r*Math.min(displayCanvas.width, displayCanvas.height);
+    const dx=px-cx, dy=py-cy;
+    if(dx*dx+dy*dy <= rr*rr) return m;
+  }
+  return null;
+}
+function addMarker(xRel, yRel) {
+  const m = { id: state.nextId++, x:xRel, y:yRel, r:0.04, type:'unknown', label:'', conc:'', unit:'mg/L' };
+  state.markers.push(m);
+  selectMarker(m.id);
+  redrawDisplay(); renderMarkerList();
+}
+function selectMarker(id) {
+  state.selectedId = id;
+  redrawDisplay(); renderMarkerList(); showEditor(state.markers.find(m=>m.id===id));
+}
+function deleteMarker(id) {
+  state.markers = state.markers.filter(m=>m.id!==id);
+  if(state.selectedId===id) state.selectedId=null;
+  redrawDisplay(); renderMarkerList(); showEditor(null);
+}
 
-        function deleteMarker(id) {
-            state.markers = state.markers.filter(m => m.id !== id);
-            if (state.selectedId === id) state.selectedId = null;
-            redrawDisplay();
-            renderMarkerList();
-            showEditor(null);
-        }
+function renderMarkerList() {
+  const list = document.getElementById('markerList');
+  document.getElementById('markerCountLbl').textContent = `(${state.markers.length})`;
+  list.innerHTML = '';
+  state.markers.forEach(m=>{
+    const el = document.createElement('div');
+    el.className = 'marker-item' + (m.id===state.selectedId ? ' selected' : '');
+    const colorHex = m.sampled ? rgbToHex(m.sampled.r,m.sampled.g,m.sampled.b) : '#333';
+    el.innerHTML = `
+      <div class="mi-main">
+        <span class="swatch" style="background:${colorHex}"></span>
+        <span class="mi-label">#${m.id} ${m.label ? '· '+escapeHtml(m.label) : ''}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="tag ${m.type}">${m.type}</span>
+        <span class="mi-del" data-del="${m.id}">✕</span>
+      </div>`;
+    el.addEventListener('click', (e)=>{
+      if(e.target.dataset.del){ deleteMarker(+e.target.dataset.del); return; }
+      selectMarker(m.id);
+    });
+    list.appendChild(el);
+  });
+}
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''); }
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-        function renderMarkerList() {
-            const list = document.getElementById('markerList');
-            document.getElementById('markerCountLbl').textContent = '(' + state.markers.length + ')';
-            list.innerHTML = '';
-            state.markers.forEach(m => {
-                const el = document.createElement('div');
-                el.className = 'marker-item' + (m.id === state.selectedId ? ' selected' : '');
-                const colorHex = m.sampled ? rgbToHex(m.sampled.r, m.sampled.g, m.sampled.b) : '#333';
-                el.innerHTML =
-                    `<div class="mi-main"><span class="swatch" style="background:${colorHex}"></span><span>#${m.id} ${m.label ? '· '+escapeHtml(m.label) : ''}</span></div><div style="display:flex;align-items:center;gap:6px;"><span class="tag ${m.type}">${m.type}</span><span class="mi-del" data-del="${m.id}">✕</span></div>`;
-                el.addEventListener('click', e => {
-                    if (e.target.dataset.del) { deleteMarker(+e.target.dataset.del); return; }
-                    selectMarker(m.id);
-                });
-                list.appendChild(el);
-            });
-        }
+/* ============================= EDITOR ============================= */
+function showEditor(m) {
+  const empty = document.getElementById('editorEmpty'), ed = document.getElementById('editor');
+  if(!m){ empty.style.display='block'; ed.style.display='none'; updateLCD(null); return; }
+  empty.style.display='none'; ed.style.display='block';
+  setSeg(m.type);
+  document.getElementById('inpLabel').value = m.label || '';
+  document.getElementById('inpConc').value = m.conc ?? '';
+  document.getElementById('inpUnit').value = m.unit || 'mg/L';
+  document.getElementById('inpRadius').value = (m.r*100).toFixed(1);
+  document.getElementById('concField').style.display = m.type==='known' ? 'grid' : 'none';
+  updateLCD(m);
+}
+function setSeg(type){
+  ['known','unknown','reference'].forEach(t=>{
+    document.getElementById('seg'+t[0].toUpperCase()+t.slice(1)).classList.toggle('on', t===type);
+  });
+}
+function updateLCD(m) {
+  const idEl = document.getElementById('lcdMarkerId'), mainEl = document.getElementById('lcdMain'), subEl = document.getElementById('lcdSub');
+  if(!m){ idEl.textContent='— NO MARKER —'; mainEl.textContent='R -- G -- B --'; subEl.textContent='Add markers'; return; }
+  const s = sampleMarker(m);
+  idEl.textContent = `MARKER #${m.id} · ${m.type.toUpperCase()}`;
+  mainEl.textContent = `R ${s.r.toFixed(0)}  G ${s.g.toFixed(0)}  B ${s.b.toFixed(0)}`;
+  subEl.textContent = `Lum ${luminance(s.r,s.g,s.b).toFixed(1)} / 255  ·  ${s.n}px`;
+}
 
-        // ===== EDITOR =====
-        function showEditor(m) {
-            const empty = document.getElementById('editorEmpty'),
-                ed = document.getElementById('editor');
-            if (!m) { empty.style.display = 'block';
-                ed.style.display = 'none';
-                updateLCD(null); return; }
-            empty.style.display = 'none';
-            ed.style.display = 'block';
-            setSeg(m.type);
-            document.getElementById('inpLabel').value = m.label || '';
-            document.getElementById('inpConc').value = m.conc ?? '';
-            document.getElementById('inpUnit').value = m.unit || 'mg/L';
-            document.getElementById('inpRadius').value = (m.r * 100).toFixed(1);
-            document.getElementById('concField').style.display = m.type === 'known' ? 'grid' : 'none';
-            updateLCD(m);
-        }
+document.getElementById('segKnown').onclick = ()=>updateType('known');
+document.getElementById('segUnknown').onclick = ()=>updateType('unknown');
+document.getElementById('segReference').onclick = ()=>updateType('reference');
+function updateType(type){
+  const m = state.markers.find(x=>x.id===state.selectedId); if(!m) return;
+  m.type = type; showEditor(m); redrawDisplay(); renderMarkerList();
+}
+document.getElementById('inpLabel').oninput = e=>{ const m=curM(); if(m){ m.label=e.target.value; renderMarkerList(); } };
+document.getElementById('inpConc').oninput = e=>{ const m=curM(); if(m) m.conc = e.target.value; };
+document.getElementById('inpUnit').oninput = e=>{ const m=curM(); if(m) m.unit = e.target.value; };
+document.getElementById('inpRadius').oninput = e=>{ const m=curM(); if(m){ m.r = (+e.target.value)/100; redrawDisplay(); updateLCD(m);} };
+document.getElementById('btnDeleteMarker').onclick = ()=>{ if(state.selectedId) deleteMarker(state.selectedId); };
+function curM(){ return state.markers.find(m=>m.id===state.selectedId); }
 
-        function setSeg(type) {
-            ['known', 'unknown', 'reference'].forEach(t => {
-                const el = document.getElementById('seg' + t[0].toUpperCase() + t.slice(1));
-                el.classList.toggle('on', t === type);
-                el.classList.toggle('unk', t === 'unknown');
-                el.classList.toggle('ref', t === 'reference');
-            });
-        }
+/* ============================= CANVAS INTERACTION ============================= */
+let dragging = null, dragMoved = false, dragStart=null;
+function canvasPos(e){
+  const rect = displayCanvas.getBoundingClientRect();
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  const scaleX = displayCanvas.width/rect.width, scaleY = displayCanvas.height/rect.height;
+  return { x: cx*scaleX, y: cy*scaleY };
+}
+function onDown(e){
+  e.preventDefault();
+  const p = canvasPos(e);
+  const hit = hitTestMarker(p.x, p.y);
+  dragStart = p; dragMoved=false;
+  if(hit){ dragging = hit; selectMarker(hit.id); } else { dragging=null; }
+}
+function onMove(e){
+  if(!dragStart) return;
+  const p = canvasPos(e);
+  if(dragging){
+    dragMoved = true;
+    dragging.x = Math.min(1,Math.max(0, p.x/displayCanvas.width));
+    dragging.y = Math.min(1,Math.max(0, p.y/displayCanvas.height));
+    redrawDisplay();
+  }
+}
+function onUp(e){
+  if(!dragStart) return;
+  const p = canvasPos(e);
+  if(!dragging && !dragMoved){
+    const xr = p.x/displayCanvas.width, yr = p.y/displayCanvas.height;
+    if(xr>=0 && xr<=1 && yr>=0 && yr<=1) addMarker(xr, yr);
+  } else if(dragging){
+    updateLCD(dragging); renderMarkerList();
+  }
+  dragging=null; dragStart=null; dragMoved=false;
+}
+displayCanvas.addEventListener('mousedown', onDown);
+displayCanvas.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+displayCanvas.addEventListener('touchstart', onDown, {passive:false});
+displayCanvas.addEventListener('touchmove', onMove, {passive:false});
+window.addEventListener('touchend', onUp);
 
-        function updateLCD(m) {
-            const idEl = document.getElementById('lcdMarkerId'),
-                mainEl = document.getElementById('lcdMain'),
-                subEl = document.getElementById('lcdSub');
-            if (!m) { idEl.textContent = '—';
-                mainEl.textContent = 'R -- G -- B --';
-                subEl.textContent = 'Tap a marker to sample'; return; }
-            const s = sampleMarker(m);
-            idEl.textContent = '#' + m.id + ' · ' + m.type;
-            mainEl.textContent = `R ${s.r.toFixed(0)}  G ${s.g.toFixed(0)}  B ${s.b.toFixed(0)}`;
-            subEl.textContent = `Lum ${luminance(s.r,s.g,s.b).toFixed(1)} / 255  ·  ${s.n}px`;
-        }
+/* ============================= CAPTURE ============================= */
+const fileInput = document.getElementById('fileInput');
+document.getElementById('tileUpload').onclick = ()=>fileInput.click();
+fileInput.onchange = e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const img = new Image();
+  img.onload = ()=>loadImageToSource(img);
+  img.src = URL.createObjectURL(file);
+};
 
-        document.getElementById('segKnown').onclick = () => updateType('known');
-        document.getElementById('segUnknown').onclick = () => updateType('unknown');
-        document.getElementById('segReference').onclick = () => updateType('reference');
+document.getElementById('tileCamera').onclick = startCamera;
+async function startCamera(){
+  const panel = document.getElementById('cameraPanel');
+  const errEl = document.getElementById('camError');
+  errEl.style.display='none';
+  panel.style.display='block';
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal:'environment' } }, audio:false });
+    state.camStream = stream;
+    document.getElementById('camStream').srcObject = stream;
+  }catch(err){
+    errEl.textContent = 'Camera permission denied or preview blocks camera. Try opening this file directly in your browser, or use "Upload image".';
+    errEl.style.display='block';
+  }
+}
+function stopCamera(){
+  if(state.camStream){ state.camStream.getTracks().forEach(t=>t.stop()); state.camStream=null; }
+  document.getElementById('cameraPanel').style.display='none';
+}
+document.getElementById('btnCancelCam').onclick = stopCamera;
+document.getElementById('btnCapture').onclick = ()=>{
+  const video = document.getElementById('camStream');
+  if(!video.videoWidth){ toast('Camera not ready'); return; }
+  loadImageToSource(video);
+};
 
-        function updateType(type) {
-            const m = state.markers.find(x => x.id === state.selectedId);
-            if (!m) return;
-            m.type = type;
-            showEditor(m);
-            redrawDisplay();
-            renderMarkerList();
-        }
-        document.getElementById('inpLabel').oninput = e => { const m = curM(); if (m) { m.label = e.target.value;
-                renderMarkerList(); } };
-        document.getElementById('inpConc').oninput = e => { const m = curM(); if (m) m.conc = e.target.value; };
-        document.getElementById('inpUnit').oninput = e => { const m = curM(); if (m) m.unit = e.target.value; };
-        document.getElementById('inpRadius').oninput = e => { const m = curM(); if (m) { m.r = (+e.target.value) / 100;
-                redrawDisplay();
-                updateLCD(m); } };
-        document.getElementById('btnDeleteMarker').onclick = () => { if (state.selectedId) deleteMarker(state.selectedId); };
+/* ============================= POLYNOMIAL FIT ============================= */
+function polyFit(xs, ys, degree) {
+  // returns coefficients [a0, a1, a2, ...] for y = a0 + a1*x + a2*x^2 + ...
+  const n = xs.length;
+  if (n < degree+1) return null;
+  // build Vandermonde matrix
+  const A = [];
+  const b = [];
+  for (let i=0; i<n; i++) {
+    const row = [];
+    for (let d=0; d<=degree; d++) row.push(Math.pow(xs[i], d));
+    A.push(row);
+    b.push(ys[i]);
+  }
+  // solve least squares via normal equations: (A^T A) c = A^T b
+  const At = Array.from({length: degree+1}, (_,i) => A.map(row => row[i]));
+  const AtA = At.map(row => Array.from({length: degree+1}, (_,j) => row.reduce((s, v, k) => s + v * A[k][j], 0)));
+  const Atb = At.map(row => row.reduce((s, v, k) => s + v * b[k], 0));
+  // Gaussian elimination
+  const m = degree+1;
+  const M = AtA.map(row => [...row]);
+  const rhs = [...Atb];
+  for (let col=0; col<m; col++) {
+    let pivot = Math.abs(M[col][col]);
+    let pivotRow = col;
+    for (let r=col+1; r<m; r++) {
+      if (Math.abs(M[r][col]) > pivot) { pivot = Math.abs(M[r][col]); pivotRow = r; }
+    }
+    if (pivot < 1e-12) return null;
+    [M[col], M[pivotRow]] = [M[pivotRow], M[col]];
+    [rhs[col], rhs[pivotRow]] = [rhs[pivotRow], rhs[col]];
+    for (let r=col+1; r<m; r++) {
+      const factor = M[r][col] / M[col][col];
+      for (let c=col; c<m; c++) M[r][c] -= factor * M[col][c];
+      rhs[r] -= factor * rhs[col];
+    }
+  }
+  const coeffs = new Array(m).fill(0);
+  for (let i=m-1; i>=0; i--) {
+    let sum = rhs[i];
+    for (let j=i+1; j<m; j++) sum -= M[i][j] * coeffs[j];
+    coeffs[i] = sum / M[i][i];
+  }
+  return coeffs;
+}
 
-        function curM() { return state.markers.find(m => m.id === state.selectedId); }
+function polyEval(coeffs, x) {
+  let y = 0;
+  for (let i=0; i<coeffs.length; i++) y += coeffs[i] * Math.pow(x, i);
+  return y;
+}
 
-        // ===== CANVAS INTERACTION =====
-        let dragging = null,
-            dragMoved = false,
-            dragStart = null;
+function rSquared(xs, ys, coeffs) {
+  const mean = ys.reduce((a,b)=>a+b,0)/ys.length;
+  let ssTot=0, ssRes=0;
+  for (let i=0; i<xs.length; i++) {
+    const pred = polyEval(coeffs, xs[i]);
+    ssRes += (ys[i] - pred)**2;
+    ssTot += (ys[i] - mean)**2;
+  }
+  return ssTot === 0 ? 1 : 1 - ssRes/ssTot;
+}
 
-        function canvasPos(e) {
-            const rect = displayCanvas.getBoundingClientRect();
-            const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-            const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-            const scaleX = displayCanvas.width / rect.width,
-                scaleY = displayCanvas.height / rect.height;
-            return { x: cx * scaleX, y: cy * scaleY };
-        }
+/* ============================= ANALYZE ============================= */
+document.getElementById('btnAnalyze').onclick = analyze;
+function analyze(){
+  const knownCount = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null).length;
+  if(knownCount < 3){ toast('Need at least 3 known-concentration markers for polynomial fit'); return; }
+  sampleAllMarkers();
+  const channel = document.getElementById('selChannel').value;
+  const fitType = document.getElementById('selFitType').value;
+  state.fitType = fitType;
+  const degree = fitType === 'poly2' ? 2 : (fitType === 'poly3' ? 3 : 1);
 
-        function onDown(e) {
-            e.preventDefault();
-            const p = canvasPos(e);
-            const hit = hitTestMarker(p.x, p.y);
-            dragStart = p;
-            dragMoved = false;
-            if (hit) { dragging = hit;
-                selectMarker(hit.id); } else { dragging = null; }
-        }
+  function respOf(m){
+    let base;
+    switch(channel){
+      case 'r': base = m.sampled.r; break;
+      case 'g': base = m.sampled.g; break;
+      case 'b': base = m.sampled.b; break;
+      case 'labL': return m.sampled.L;
+      case 'laba': return m.sampled.a;
+      case 'labb': return m.sampled.bLab;
+      default: base = m.sampled.lum;
+    }
+    return base;
+  }
+  state.markers.forEach(m=>{ if(m.sampled) m.response = respOf(m); });
 
-        function onMove(e) {
-            if (!dragStart) return;
-            const p = canvasPos(e);
-            if (dragging) {
-                dragMoved = true;
-                dragging.x = Math.min(1, Math.max(0, p.x / displayCanvas.width));
-                dragging.y = Math.min(1, Math.max(0, p.y / displayCanvas.height));
-                redrawDisplay();
-            }
-        }
+  const knowns = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null);
+  const xs = knowns.map(m=>parseFloat(m.conc));
+  const ys = knowns.map(m=>m.response);
+  const coeffs = polyFit(xs, ys, degree);
+  if(!coeffs) { toast('Polynomial fit failed — try linear or more data'); return; }
+  const r2 = rSquared(xs, ys, coeffs);
 
-        function onUp(e) {
-            if (!dragStart) return;
-            const p = canvasPos(e);
-            if (!dragging && !dragMoved) {
-                const xr = p.x / displayCanvas.width,
-                    yr = p.y / displayCanvas.height;
-                if (xr >= 0 && xr <= 1 && yr >= 0 && yr <= 1) addMarker(xr, yr);
-            } else if (dragging) {
-                updateLCD(dragging);
-                renderMarkerList();
-            }
-            dragging = null;
-            dragStart = null;
-            dragMoved = false;
-        }
-        displayCanvas.addEventListener('mousedown', onDown);
-        displayCanvas.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-        displayCanvas.addEventListener('touchstart', onDown, { passive: false });
-        displayCanvas.addEventListener('touchmove', onMove, { passive: false });
-        window.addEventListener('touchend', onUp);
+  state.markers.forEach(m=>{
+    if(m.type==='known'){ m.resultConc = parseFloat(m.conc); }
+    else if(m.type==='unknown' && m.response!=null){
+      // solve polynomial using binary search since we need inverse
+      const target = m.response;
+      let lo = Math.min(...xs)*0.8, hi = Math.max(...xs)*1.2;
+      for(let iter=0; iter<80; iter++){
+        const mid = (lo+hi)/2;
+        const val = polyEval(coeffs, mid);
+        if(val < target) lo = mid; else hi = mid;
+      }
+      m.resultConc = (lo+hi)/2;
+    }
+  });
 
-        // ===== CAPTURE =====
-        const fileInput = document.getElementById('fileInput');
-        document.getElementById('tileUpload').onclick = () => fileInput.click();
-        fileInput.onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const img = new Image();
-            img.onload = () => loadImageToSource(img);
-            img.src = URL.createObjectURL(file);
-        };
+  state.fit = { coeffs, r2, channel, degree, xs, ys, type: fitType };
+  renderResults();
+  setStep(3);
+}
 
-        document.getElementById('tileCamera').onclick = startCamera;
+/* ============================= RESULTS RENDERING ============================= */
+function renderResults(){
+  const fs = document.getElementById('fitSummary');
+  const deg = state.fit.degree;
+  let eq = `y = ${state.fit.coeffs[0].toFixed(4)}`;
+  for(let i=1; i<=deg; i++){
+    const sign = state.fit.coeffs[i] >= 0 ? '+' : '';
+    eq += ` ${sign}${state.fit.coeffs[i].toFixed(4)}·x${i>1?'^'+i:''}`;
+  }
+  fs.innerHTML = `
+    <div class="fs-item"><div class="fs-l">Equation</div><div class="fs-v" style="font-size:13px;">${eq}</div></div>
+    <div class="fs-item"><div class="fs-l">R²</div><div class="fs-v">${state.fit.r2.toFixed(5)}</div></div>
+    <div class="fs-item"><div class="fs-l">Degree</div><div class="fs-v">${state.fit.degree}</div></div>
+  `;
+  const warnEl = document.getElementById('fitWarning');
+  if(state.fit.r2 < 0.9){
+    warnEl.style.display='block';
+    warnEl.textContent = `R² = ${state.fit.r2.toFixed(4)} — consider more standards or a higher-degree polynomial.`;
+  } else warnEl.style.display='none';
 
-        async function startCamera() {
-            const panel = document.getElementById('cameraPanel');
-            const errEl = document.getElementById('camError');
-            errEl.style.display = 'none';
-            panel.style.display = 'block';
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } },
-                    audio: false });
-                state.camStream = stream;
-                document.getElementById('camStream').srcObject = stream;
-            } catch (err) {
-                errEl.textContent =
-                    'Camera permission denied or unavailable. Try opening in a browser directly, or use "Upload image".';
-                errEl.style.display = 'block';
-            }
-        }
+  const body = document.getElementById('resTableBody');
+  body.innerHTML='';
+  state.markers.forEach(m=>{
+    if(!m.sampled) return;
+    const tr = document.createElement('tr');
+    const swatch = `<span class="swatch" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${rgbToHex(m.sampled.r,m.sampled.g,m.sampled.b)};border:1px solid rgba(255,255,255,.25)"></span>`;
+    const concTxt = m.type==='reference' ? '—' : (isFinite(m.resultConc) ? m.resultConc.toFixed(3)+' '+(m.unit||'') : '—');
+    tr.innerHTML = `<td>${swatch}</td><td>${escapeHtml(m.label||('#'+m.id))}</td><td><span class="tag ${m.type}">${m.type}</span></td>
+      <td>${m.sampled.r.toFixed(0)},${m.sampled.g.toFixed(0)},${m.sampled.b.toFixed(0)}</td>
+      <td>${m.response!=null ? m.response.toFixed(4) : '—'}</td><td>${concTxt}</td>`;
+    body.appendChild(tr);
+  });
+  drawChart();
+}
 
-        function stopCamera() {
-            if (state.camStream) { state.camStream.getTracks().forEach(t => t.stop());
-                state.camStream = null; }
-            document.getElementById('cameraPanel').style.display = 'none';
-        }
-        document.getElementById('btnCancelCam').onclick = stopCamera;
-        document.getElementById('btnCapture').onclick = () => {
-            const video = document.getElementById('camStream');
-            if (!video.videoWidth) { toast('Camera not ready'); return; }
-            loadImageToSource(video);
-        };
+function drawChart(){
+  const canvas = document.getElementById('chartCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 500, cssH = 300;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cssW,cssH);
 
-        // ===== TIPS =====
-        document.getElementById('tipsToggle').onclick = () => {
-            const body = document.getElementById('tipsBody');
-            body.classList.toggle('open');
-            document.getElementById('tipsChevron').textContent = body.classList.contains('open') ? '−' : '+';
-        };
+  const knowns = state.markers.filter(m=>m.type==='known' && m.resultConc!=null && m.response!=null);
+  const unknowns = state.markers.filter(m=>m.type==='unknown' && m.response!=null);
+  if(knowns.length===0) return;
 
-        // ===== ANALYZE =====
-        document.getElementById('btnAnalyze').onclick = analyze;
+  const allX = knowns.map(m=>m.resultConc).concat(unknowns.map(m=>m.resultConc).filter(isFinite));
+  const allY = knowns.map(m=>m.response).concat(unknowns.map(m=>m.response));
+  const xMin = Math.min(...allX,0), xMax = Math.max(...allX)*1.1 || 1;
+  const yMin = Math.min(...allY)*0.9, yMax = Math.max(...allY)*1.1 || 1;
+  const pad = {l:46,r:16,t:16,b:36};
+  const px = x => pad.l + (x-xMin)/(xMax-xMin||1) * (cssW-pad.l-pad.r);
+  const py = y => cssH-pad.b - (y-yMin)/(yMax-yMin||1) * (cssH-pad.t-pad.b);
 
-        function analyze() {
-            const knownCount = state.markers.filter(m => m.type === 'known' && m.conc !== '' && m.conc != null).length;
-            if (knownCount < 2) { toast('Add at least 2 known-concentration markers'); return; }
-            const refUsed = sampleAllMarkers();
-            const channel = document.getElementById('selChannel').value;
-            const metric = document.getElementById('selMetric').value;
+  ctx.strokeStyle = '#B7AF98'; ctx.lineWidth=1; ctx.font='10px IBM Plex Mono, monospace'; ctx.fillStyle='#5E6B5F';
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, cssH-pad.b); ctx.lineTo(cssW-pad.r, cssH-pad.b); ctx.stroke();
+  for(let i=0;i<=4;i++){
+    const yv = yMin + (yMax-yMin)*i/4;
+    const yy = py(yv);
+    ctx.strokeStyle='rgba(28,35,29,.07)'; ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(cssW-pad.r,yy); ctx.stroke();
+    ctx.fillText(yv.toFixed(2), 4, yy+3);
+  }
+  for(let i=0;i<=4;i++){
+    const xv = xMin + (xMax-xMin)*i/4;
+    ctx.fillText(xv.toFixed(1), px(xv)-8, cssH-pad.b+14);
+  }
 
-            function respOf(m) {
-                let base;
-                switch (channel) {
-                    case 'r':
-                        base = m.sampled.r;
-                        break;
-                    case 'g':
-                        base = m.sampled.g;
-                        break;
-                    case 'b':
-                        base = m.sampled.b;
-                        break;
-                    case 'labL':
-                        return m.sampled.L;
-                    case 'laba':
-                        return m.sampled.a;
-                    case 'labb':
-                        return m.sampled.bLab;
-                    default:
-                        base = m.sampled.lum;
-                }
-                if (metric === 'absorbance') {
-                    const norm = Math.min(254.9, Math.max(0.1, base));
-                    return -Math.log10(norm / 255);
-                }
-                return base;
-            }
-            state.markers.forEach(m => { if (m.sampled) m.response = respOf(m); });
+  // polynomial curve
+  ctx.strokeStyle = '#B4650B'; ctx.lineWidth=2;
+  ctx.beginPath();
+  const steps = 100;
+  for(let i=0; i<=steps; i++){
+    const x = xMin + (xMax-xMin)*i/steps;
+    const y = polyEval(state.fit.coeffs, x);
+    if(i===0) ctx.moveTo(px(x), py(y));
+    else ctx.lineTo(px(x), py(y));
+  }
+  ctx.stroke();
 
-            const knowns = state.markers.filter(m => m.type === 'known' && m.conc !== '' && m.conc != null);
-            const xs = knowns.map(m => parseFloat(m.conc)),
-                ys = knowns.map(m => m.response);
-            const n = xs.length;
-            const mx = xs.reduce((a, b) => a + b, 0) / n,
-                my = ys.reduce((a, b) => a + b, 0) / n;
-            let num = 0,
-                den = 0;
-            for (let i = 0; i < n; i++) { num += (xs[i] - mx) * (ys[i] - my);
-                den += (xs[i] - mx) * (xs[i] - mx); }
-            const slope = den === 0 ? 0 : num / den;
-            const intercept = my - slope * mx;
-            let ssTot = 0,
-                ssRes = 0;
-            for (let i = 0; i < n; i++) { const pred = slope * xs[i] + intercept;
-                ssRes += (ys[i] - pred) ** 2;
-                ssTot += (ys[i] - my) ** 2; }
-            const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+  knowns.forEach(m=>{
+    ctx.beginPath(); ctx.fillStyle = '#B4650B';
+    ctx.arc(px(m.resultConc), py(m.response), 4, 0, Math.PI*2); ctx.fill();
+  });
+  unknowns.forEach(m=>{
+    if(!isFinite(m.resultConc)) return;
+    const x=px(m.resultConc), y=py(m.response);
+    ctx.fillStyle='#178A6E';
+    ctx.beginPath(); ctx.moveTo(x,y-5); ctx.lineTo(x+5,y); ctx.lineTo(x,y+5); ctx.lineTo(x-5,y); ctx.closePath(); ctx.fill();
+  });
+}
 
-            state.markers.forEach(m => {
-                if (m.type === 'known') { m.resultConc = parseFloat(m.conc); } else if (m.type === 'unknown' && m
-                    .response != null) { m.resultConc = slope === 0 ? NaN : (m.response - intercept) / slope; }
-            });
+/* ============================= SAVE ============================= */
+function sanitizeFilename(name){
+  const cleaned = name.replace(/[^a-z0-9_\-]+/gi, '_').replace(/^_+|_+$/g,'');
+  return cleaned || ('reading_'+Date.now());
+}
+function drawAnnotatedImage(){
+  const w = state.imgW, h = state.imgH;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  octx.drawImage(state.sourceCanvas, 0, 0);
+  const lineW = Math.max(2, Math.round(w*0.0035));
+  const fontSize = Math.max(14, Math.round(w*0.018));
+  state.markers.forEach(m=>{
+    const cx = m.x*w, cy = m.y*h, rr = m.r*Math.min(w,h);
+    octx.lineWidth = lineW;
+    octx.strokeStyle = m.type==='known' ? '#F5A623' : m.type==='reference' ? '#c9d6cf' : '#178A6E';
+    octx.beginPath(); octx.arc(cx, cy, rr, 0, Math.PI*2); octx.stroke();
+    const label = '#'+m.id + (m.label ? (' '+m.label) : '') + (m.type==='known' ? (' ('+m.conc+(m.unit?(' '+m.unit):'')+')') : '');
+    octx.font = `${fontSize}px monospace`;
+    const tw = octx.measureText(label).width;
+    octx.fillStyle = 'rgba(0,0,0,.62)';
+    octx.fillRect(cx-tw/2-8, cy-rr-fontSize-14, tw+16, fontSize+10);
+    octx.fillStyle = '#ffffff';
+    octx.fillText(label, cx-tw/2, cy-rr-10);
+  });
+  return out;
+}
+function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+function downloadBlob(content, filename, type){ const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
 
-            state.fit = { slope, intercept, r2, channel, metric, refUsed, xs, ys };
-            renderResults();
-            setStep(3);
-        }
+document.getElementById('btnSaveRecord').onclick = ()=>{
+  if(!state.fit){ toast('Run Analyze first'); return; }
+  let raw = prompt('Save as — file name (no extension):', 'yellow_reading_'+(state.dataset.length+1));
+  if(raw===null) return;
+  const name = sanitizeFilename(raw.trim());
+  const annotated = drawAnnotatedImage();
+  downloadDataUrl(annotated.toDataURL('image/png'), name+'.png');
 
-        // ===== RESULTS =====
-        function renderResults() {
-            const fs = document.getElementById('fitSummary');
-            fs.innerHTML =
-                `<div class="fs-item"><div class="fs-l">Slope</div><div class="fs-v">${state.fit.slope.toFixed(5)}</div></div>
-                <div class="fs-item"><div class="fs-l">Intercept</div><div class="fs-v">${state.fit.intercept.toFixed(4)}</div></div>
-                <div class="fs-item"><div class="fs-l">R²</div><div class="fs-v">${state.fit.r2.toFixed(4)}</div></div>
-                <div class="fs-item"><div class="fs-l">Reference</div><div class="fs-v">${state.fit.refUsed ? 'Yes' : 'No'}</div></div>`;
+  const rows = [['image_name','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration','fit_type','degree','coeffs','r2']];
+  const coeffStr = state.fit.coeffs.map(c=>c.toFixed(6)).join(';');
+  state.markers.filter(m=>m.sampled).forEach(m=>{
+    rows.push([
+      name, m.id, m.type, JSON.stringify(m.label||''), m.unit||'',
+      m.sampled.r.toFixed(2), m.sampled.g.toFixed(2), m.sampled.b.toFixed(2),
+      m.sampled.L.toFixed(2), m.sampled.a.toFixed(2), m.sampled.bLab.toFixed(2),
+      m.response!=null ? m.response.toFixed(4) : '',
+      isFinite(m.resultConc) ? m.resultConc.toFixed(4) : '',
+      state.fit.type, state.fit.degree, coeffStr, state.fit.r2.toFixed(6)
+    ]);
+  });
+  downloadBlob(rows.map(r=>r.join(',')).join('\n'), name+'.csv', 'text/csv');
 
-            const warnEl = document.getElementById('fitWarning');
-            if (state.fit.r2 < 0.9) {
-                warnEl.style.display = 'block';
-                warnEl.textContent = `R² is ${state.fit.r2.toFixed(3)} — weak fit. Try more standards or a different channel.`;
-            } else warnEl.style.display = 'none';
+  state.dataset.push({
+    id: name,
+    fit: state.fit,
+    markers: state.markers.filter(m=>m.sampled).map(m=>({
+      markerId: m.id, type: m.type, label: m.label, unit: m.unit,
+      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab,
+      response: m.response, concentration: isFinite(m.resultConc) ? m.resultConc : null
+    }))
+  });
+  updateDatasetCounters();
+  toast('Saved '+name+'.png and '+name+'.csv');
+};
 
-            const body = document.getElementById('resTableBody');
-            body.innerHTML = '';
-            state.markers.forEach(m => {
-                if (!m.sampled) return;
-                const tr = document.createElement('tr');
-                const swatch =
-                    `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${rgbToHex(m.sampled.r,m.sampled.g,m.sampled.b)};border:1px solid rgba(255,255,255,.25)"></span>`;
-                const concTxt = m.type === 'reference' ? '—' : (isFinite(m.resultConc) ? m.resultConc.toFixed(3) +
-                    ' ' + (m.unit || '') : '—');
-                tr.innerHTML =
-                    `<td>${swatch}</td><td>${escapeHtml(m.label||'#'+m.id)}</td><td><span class="tag ${m.type}">${m.type}</span></td>
-                    <td>${m.sampled.r.toFixed(0)},${m.sampled.g.toFixed(0)},${m.sampled.b.toFixed(0)}</td>
-                    <td>${m.response!=null ? m.response.toFixed(4) : '—'}</td><td>${concTxt}</td>`;
-                body.appendChild(tr);
-            });
-            drawChart();
-        }
+document.getElementById('btnExportJSON').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  downloadBlob(JSON.stringify(state.dataset, null, 2), 'yellow_dataset.json', 'application/json');
+};
+document.getElementById('btnExportCSV').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  const rows = [['record_id','fit_type','degree','coeffs','r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration']];
+  state.dataset.forEach(rec=>{
+    const coeffStr = rec.fit.coeffs.map(c=>c.toFixed(6)).join(';');
+    rec.markers.forEach(m=>{
+      rows.push([rec.id, rec.fit.type, rec.fit.degree, coeffStr, rec.fit.r2.toFixed(6),
+        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
+    });
+  });
+  downloadBlob(rows.map(r=>r.join(',')).join('\n'), 'yellow_dataset.csv', 'text/csv');
+};
+document.getElementById('btnClearDataset').onclick = ()=>{
+  if(confirm('Clear all session-saved records? (Export first if needed.)')){
+    state.dataset = []; updateDatasetCounters();
+  }
+};
 
-        function drawChart() {
-            const canvas = document.getElementById('chartCanvas');
-            const dpr = window.devicePixelRatio || 1;
-            const cssW = canvas.clientWidth || 500,
-                cssH = 280;
-            canvas.width = cssW * dpr;
-            canvas.height = cssH * dpr;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, cssW, cssH);
+function updateDatasetCounters(){
+  document.getElementById('datasetCount').textContent = state.dataset.length;
+  document.getElementById('datasetMarkerCount').textContent = state.dataset.reduce((a,r)=>a+r.markers.length,0);
+}
 
-            const knowns = state.markers.filter(m => m.type === 'known' && m.resultConc != null && m.response != null);
-            const unknowns = state.markers.filter(m => m.type === 'unknown' && m.response != null);
-            if (!knowns.length) return;
+document.getElementById('btnBackToMark').onclick = ()=>setStep(2);
+document.getElementById('btnNewAnalysis').onclick = ()=>{
+  state.markers=[]; state.selectedId=null; state.fit=null; state.imageData=null;
+  setStep(1);
+};
 
-            const allX = knowns.map(m => m.resultConc).concat(unknowns.map(m => m.resultConc).filter(isFinite));
-            const allY = knowns.map(m => m.response).concat(unknowns.map(m => m.response));
-            const xMin = Math.min(...allX, 0),
-                xMax = Math.max(...allX) * 1.1 || 1;
-            const yMin = Math.min(...allY) * 0.9,
-                yMax = Math.max(...allY) * 1.1 || 1;
-            const pad = { l: 42, r: 14, t: 14, b: 32 };
-            const px = x => pad.l + (x - xMin) / (xMax - xMin || 1) * (cssW - pad.l - pad.r);
-            const py = y => cssH - pad.b - (y - yMin) / (yMax - yMin || 1) * (cssH - pad.t - pad.b);
-
-            ctx.strokeStyle = '#B7AF98';
-            ctx.lineWidth = 1;
-            ctx.font = '9px monospace';
-            ctx.fillStyle = '#5E6B5F';
-            ctx.beginPath();
-            ctx.moveTo(pad.l, pad.t);
-            ctx.lineTo(pad.l, cssH - pad.b);
-            ctx.lineTo(cssW - pad.r, cssH - pad.b);
-            ctx.stroke();
-            for (let i = 0; i <= 4; i++) {
-                const yv = yMin + (yMax - yMin) * i / 4;
-                const yy = py(yv);
-                ctx.strokeStyle = 'rgba(28,35,29,.07)';
-                ctx.beginPath();
-                ctx.moveTo(pad.l, yy);
-                ctx.lineTo(cssW - pad.r, yy);
-                ctx.stroke();
-                ctx.fillText(yv.toFixed(2), 2, yy + 3);
-            }
-            for (let i = 0; i <= 4; i++) {
-                const xv = xMin + (xMax - xMin) * i / 4;
-                ctx.fillText(xv.toFixed(1), px(xv) - 6, cssH - pad.b + 12);
-            }
-
-            ctx.strokeStyle = '#178A6E';
-            ctx.lineWidth = 1.8;
-            ctx.beginPath();
-            ctx.moveTo(px(xMin), py(state.fit.slope * xMin + state.fit.intercept));
-            ctx.lineTo(px(xMax), py(state.fit.slope * xMax + state.fit.intercept));
-            ctx.stroke();
-
-            knowns.forEach(m => {
-                ctx.beginPath();
-                ctx.fillStyle = '#178A6E';
-                ctx.arc(px(m.resultConc), py(m.response), 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            unknowns.forEach(m => {
-                if (!isFinite(m.resultConc)) return;
-                const x = px(m.resultConc),
-                    y = py(m.response);
-                ctx.fillStyle = '#B4650B';
-                ctx.beginPath();
-                ctx.moveTo(x, y - 5);
-                ctx.lineTo(x + 5, y);
-                ctx.lineTo(x, y + 5);
-                ctx.lineTo(x - 5, y);
-                ctx.closePath();
-                ctx.fill();
-            });
-        }
-
-        // ===== SAVE / EXPORT =====
-        function updateDatasetCounters() {
-            document.getElementById('datasetCount').textContent = state.dataset.length;
-            document.getElementById('datasetMarkerCount').textContent = state.dataset.reduce((a, r) => a + r.markers.length,
-            0);
-        }
-
-        function sanitizeFilename(name) {
-            const cleaned = name.replace(/[^a-z0-9_\-]+/gi, '_').replace(/^_+|_+$/g, '');
-            return cleaned || ('reading_' + Date.now());
-        }
-
-        function drawAnnotatedImage() {
-            const w = state.imgW,
-                h = state.imgH;
-            const out = document.createElement('canvas');
-            out.width = w;
-            out.height = h;
-            const octx = out.getContext('2d');
-            octx.drawImage(state.sourceCanvas, 0, 0);
-            const lineW = Math.max(2, Math.round(w * 0.003));
-            const fontSize = Math.max(12, Math.round(w * 0.016));
-            state.markers.forEach(m => {
-                const cx = m.x * w,
-                    cy = m.y * h,
-                    rr = m.r * Math.min(w, h);
-                octx.lineWidth = lineW;
-                octx.strokeStyle = m.type === 'known' ? '#4FD1AE' : m.type === 'reference' ? '#c9d6cf' : '#F5A623';
-                octx.beginPath();
-                octx.arc(cx, cy, rr, 0, Math.PI * 2);
-                octx.stroke();
-                const label = '#' + m.id + (m.label ? ' ' + m.label : '') + (m.type === 'known' ? ' (' + m.conc + (m
-                    .unit ? ' ' + m.unit : '') + ')' : '');
-                octx.font = fontSize + 'px monospace';
-                const tw = octx.measureText(label).width;
-                octx.fillStyle = 'rgba(0,0,0,.6)';
-                octx.fillRect(cx - tw / 2 - 6, cy - rr - fontSize - 10, tw + 12, fontSize + 8);
-                octx.fillStyle = '#fff';
-                octx.fillText(label, cx - tw / 2, cy - rr - 6);
-            });
-            return out;
-        }
-
-        function downloadDataUrl(dataUrl, filename) {
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function downloadBlob(content, filename, type) {
-            const blob = new Blob([content], { type });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        document.getElementById('btnSaveRecord').onclick = () => {
-            if (!state.fit) { toast('Run Analyze first'); return; }
-            let raw = prompt('File name (no extension):', 'reading_' + (state.dataset.length + 1));
-            if (raw === null) return;
-            const name = sanitizeFilename(raw.trim());
-
-            const annotated = drawAnnotatedImage();
-            downloadDataUrl(annotated.toDataURL('image/png'), name + '.png');
-
-            const rows = [
-                ['marker_id', 'type', 'label', 'unit', 'R', 'G', 'B', 'L', 'a', 'b_lab', 'response', 'concentration',
-                    'fit_channel', 'fit_metric', 'fit_slope', 'fit_intercept', 'fit_r2'
-                ]
-            ];
-            state.markers.filter(m => m.sampled).forEach(m => {
-                rows.push([
-                    m.id, m.type, JSON.stringify(m.label || ''), m.unit || '',
-                    m.sampled.r.toFixed(2), m.sampled.g.toFixed(2), m.sampled.b.toFixed(2),
-                    m.sampled.L.toFixed(2), m.sampled.a.toFixed(2), m.sampled.bLab.toFixed(2),
-                    m.response != null ? m.response.toFixed(4) : '',
-                    isFinite(m.resultConc) ? m.resultConc.toFixed(4) : '',
-                    state.fit.channel, state.fit.metric, state.fit.slope, state.fit.intercept, state.fit.r2
-                ]);
-            });
-            downloadBlob(rows.map(r => r.join(',')).join('\n'), name + '.csv', 'text/csv');
-
-            state.dataset.push({
-                id: name,
-                fit: state.fit,
-                markers: state.markers.filter(m => m.sampled).map(m => ({
-                    markerId: m.id,
-                    type: m.type,
-                    label: m.label,
-                    unit: m.unit,
-                    r: m.sampled.r,
-                    g: m.sampled.g,
-                    b: m.sampled.b,
-                    L: m.sampled.L,
-                    a: m.sampled.a,
-                    bLab: m.sampled.bLab,
-                    response: m.response,
-                    concentration: isFinite(m.resultConc) ? m.resultConc : null
-                }))
-            });
-            updateDatasetCounters();
-            toast('Saved ' + name + '.png and ' + name + '.csv');
-        };
-
-        document.getElementById('btnExportJSON').onclick = () => {
-            if (!state.dataset.length) { toast('No saved records'); return; }
-            downloadBlob(JSON.stringify(state.dataset, null, 2), 'colorimeter_dataset.json', 'application/json');
-        };
-        document.getElementById('btnExportCSV').onclick = () => {
-            if (!state.dataset.length) { toast('No saved records'); return; }
-            const rows = [
-                ['record_id', 'fit_channel', 'fit_metric', 'fit_slope', 'fit_intercept', 'fit_r2', 'marker_id',
-                    'type', 'label', 'unit', 'R', 'G', 'B', 'L', 'a', 'b_lab', 'response', 'concentration'
-                ]
-            ];
-            state.dataset.forEach(rec => {
-                rec.markers.forEach(m => {
-                    rows.push([rec.id, rec.fit.channel, rec.fit.metric, rec.fit.slope, rec.fit.intercept,
-                        rec.fit.r2,
-                        m.markerId, m.type, JSON.stringify(m.label || ''), m.unit,
-                        m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2),
-                        m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2),
-                        m.response?.toFixed(4) ?? '', m.concentration ?? ''
-                    ]);
-                });
-            });
-            downloadBlob(rows.map(r => r.join(',')).join('\n'), 'colorimeter_dataset.csv', 'text/csv');
-        };
-        document.getElementById('btnClearDataset').onclick = () => {
-            if (confirm('Clear all saved records?')) { state.dataset = [];
-                updateDatasetCounters(); }
-        };
-
-        // ===== NAV =====
-        document.getElementById('btnBackToMark').onclick = () => setStep(2);
-        document.getElementById('btnNewAnalysis').onclick = () => {
-            state.markers = [];
-            state.selectedId = null;
-            state.fit = null;
-            state.imageData = null;
-            setStep(1);
-        };
-
-        updateDatasetCounters();
-    </script>
+updateDatasetCounters();
+</script>
 </body>
 </html>

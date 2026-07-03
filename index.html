@@ -1,673 +1,885 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Color intensity · concentration (multi-layer)</title>
-  <!-- Chart.js for mini visual -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chat.umd.min.js"></script>
-  <style>
-    /* ---- reset & base ---- */
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, system-ui, sans-serif; }
-    body {
-      background: #eef3fc;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-    .app-shell {
-      max-width: 780px;
-      width: 100%;
-      background: white;
-      border-radius: 48px;
-      padding: 20px 20px 28px;
-      box-shadow: 0 20px 40px rgba(0,20,50,0.12);
-    }
-    /* ---- layer 1 : header ---- */
-    .layer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .layer-header h1 {
-      font-weight: 600;
-      font-size: 1.9rem;
-      color: #0b1e3a;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .layer-header .badge-layer {
-      background: #d3e2f7;
-      padding: 6px 16px;
-      border-radius: 60px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #1d3f66;
-    }
-    .subhead {
-      color: #3d5a78;
-      padding-left: 14px;
-      border-left: 4px solid #2b7be4;
-      margin-bottom: 18px;
-      font-weight: 400;
-      font-size: 0.95rem;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Colorimeter — Concentration from Color Intensity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1512;
+    --bg-2:#0B100D;
+    --panel:#161F19;
+    --panel-2:#1D2921;
+    --line:#2A3A30;
+    --line-soft:#20291f;
+    --text:#E8EDE9;
+    --muted:#8CA398;
+    --muted-2:#5f7669;
+    --accent:#4FD1AE;
+    --accent-dim:#2c8a71;
+    --accent-2:#F5A623;
+    --accent-2-dim:#a16f1e;
+    --danger:#E8604C;
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(79,209,174,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent-dim); color:#fff;}
 
-    /* ---- layer 2 : image input & preview ---- */
-    .layer-image {
-      background: #f0f6ff;
-      border-radius: 32px;
-      padding: 16px 16px 14px;
-      margin-bottom: 18px;
-      border: 1px solid #dce8f8;
-    }
-    .image-box {
-      background: #d9e3f0;
-      border-radius: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 200px;
-      overflow: hidden;
-      position: relative;
-      margin-bottom: 14px;
-      transition: background 0.2s;
-      cursor: pointer;
-    }
-    .image-box img {
-      max-width: 100%;
-      max-height: 280px;
-      display: block;
-      border-radius: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-    }
-    .placeholder-text {
-      color: #3b5a7a;
-      opacity: 0.7;
-      padding: 20px;
-      text-align: center;
-      font-weight: 400;
-    }
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .btn {
-      background: white;
-      border: 1px solid #c5d6ea;
-      padding: 10px 24px;
-      border-radius: 60px;
-      font-weight: 500;
-      color: #1a3352;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-      flex: 1 0 auto;
-      justify-content: center;
-      background: #f0f6ff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-    .btn-primary {
-      background: #1b3b6b;
-      border: 1px solid #1b3b6b;
-      color: white;
-      box-shadow: 0 6px 12px rgba(27,59,107,0.18);
-    }
-    .btn-primary:active { background: #0f2a4a; transform: scale(0.96); }
-    .btn-outline { background: transparent; border: 1px solid #a0bada; }
-    .btn:active { transform: scale(0.96); }
-    #fileInput { display: none; }
+  .app-shell{max-width:1180px; margin:0 auto; padding:20px 18px 60px;}
 
-    /* ---- layer 3 : markers & calibration (known / unknown) ---- */
-    .layer-markers {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin: 16px 0 12px;
-    }
-    .marker-card {
-      background: #f5faff;
-      border-radius: 40px;
-      padding: 12px 16px;
-      border: 1px solid #e2edfc;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px 12px;
-    }
-    .marker-label {
-      font-weight: 500;
-      color: #103456;
-      min-width: 100px;
-      font-size: 0.9rem;
-    }
-    .marker-group {
-      display: flex;
-      flex: 1;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .marker-btn {
-      background: white;
-      border: 1px solid #bed4ed;
-      border-radius: 40px;
-      padding: 5px 18px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #1a3a5e;
-      cursor: pointer;
-      transition: 0.1s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-      flex: 0 1 auto;
-    }
-    .marker-btn.active {
-      background: #1b3b6b;
-      border-color: #1b3b6b;
-      color: white;
-      box-shadow: 0 4px 8px rgba(27,59,107,0.2);
-    }
-    .marker-btn.unknown {
-      border-color: #b3893c;
-      background: #fff3db;
-    }
-    .marker-btn.unknown.active {
-      background: #b3893c;
-      border-color: #b3893c;
-      color: white;
-    }
-    .custom-known-row {
-      display: flex;
-      gap: 8px;
-      padding: 0 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .custom-known-row input {
-      flex: 1;
-      padding: 8px 16px;
-      border-radius: 60px;
-      border: 1px solid #bed4ed;
-      background: white;
-      font-weight: 500;
-      min-width: 80px;
-    }
-    .custom-known-row button {
-      background: #d4e2f5;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 60px;
-      font-weight: 500;
-      color: #1a3a5e;
-      cursor: pointer;
-    }
+  /* ---------- Topbar ---------- */
+  .topbar{display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:6px 2px 22px; border-bottom:1px solid var(--line-soft);}
+  .brand{display:flex; flex-direction:column; gap:4px;}
+  .brand .mark{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase;}
+  .brand h1{font-family:var(--sans); font-weight:600; font-size:26px; margin:0; letter-spacing:-0.01em;}
+  .brand p{margin:0; color:var(--muted); font-size:13px;}
 
-    /* ---- layer 4 : result panel ---- */
-    .layer-result {
-      background: #e5effa;
-      border-radius: 32px;
-      padding: 16px 20px;
-      margin: 14px 0 10px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      border: 1px solid #d3e2f5;
-    }
-    .result-item {
-      display: flex;
-      flex-direction: column;
-    }
-    .result-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: #34608b;
-    }
-    .result-value {
-      font-size: 1.7rem;
-      font-weight: 600;
-      color: #0b2442;
-    }
-    .result-value small {
-      font-weight: 400;
-      font-size: 0.9rem;
-      color: #2b5a82;
-    }
-    .mini-chart-wrap {
-      width: 100%;
-      margin-top: 6px;
-    }
-    canvas#intensityChart {
-      max-height: 50px;
-      width: 100% !important;
-    }
+  .steps{display:flex; gap:0; font-family:var(--mono); font-size:11px;}
+  .step{display:flex; align-items:center; gap:8px; padding:8px 14px; color:var(--muted-2); border-bottom:2px solid transparent;}
+  .step .n{width:18px; height:18px; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:10px;}
+  .step.active{color:var(--accent); border-color:var(--accent);}
+  .step.active .n{border-color:var(--accent); color:var(--accent); box-shadow:0 0 10px rgba(79,209,174,.35);}
+  .step.done{color:var(--text);}
+  .step.done .n{border-color:var(--accent-dim); background:var(--accent-dim); color:#08130f;}
 
-    /* ---- layer 5 : save & log ---- */
-    .layer-save {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 12px;
-      gap: 12px;
-    }
-    .btn-save {
-      background: #1f8b4c;
-      border: none;
-      color: white;
-      padding: 12px 32px;
-      border-radius: 60px;
-      font-weight: 600;
-      box-shadow: 0 6px 14px rgba(31,139,76,0.22);
-      cursor: pointer;
-    }
-    .btn-save:active { background: #13683a; transform: scale(0.96); }
-    .layer-log {
-      margin-top: 18px;
-      background: #f0f5fd;
-      border-radius: 28px;
-      padding: 12px 16px;
-      max-height: 130px;
-      overflow-y: auto;
-      border: 1px solid #d4e2f5;
-      font-size: 0.8rem;
-      color: #1f3f62;
-    }
-    .log-entry {
-      padding: 4px 0;
-      border-bottom: 1px dashed #c7d9f0;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .log-entry:last-child { border-bottom: none; }
-    .badge {
-      background: #2b7be4;
-      color: white;
-      border-radius: 40px;
-      padding: 0 12px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      display: inline-block;
-    }
-    .badge.unknown-badge { background: #b3893c; }
-    .footnote {
-      margin-top: 14px;
-      color: #4f6f92;
-      font-size: 0.75rem;
-      text-align: center;
-    }
-    .hidden { display: none; }
+  /* ---------- Generic ---------- */
+  .view{display:none; padding-top:28px;}
+  .view.active{display:block;}
+  .card{background:var(--panel); border:1px solid var(--line-soft); border-radius:var(--radius); padding:20px;}
+  .muted{color:var(--muted);}
+  h2.sec-title{font-family:var(--sans); font-size:15px; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); margin:0 0 14px;}
 
-    @media (max-width: 500px) {
-      .app-shell { padding: 14px; }
-      .marker-card { flex-direction: column; align-items: stretch; }
-      .marker-label { min-width: auto; }
-    }
-  </style>
+  .btn{
+    font-family:var(--sans); font-weight:500; font-size:14px; letter-spacing:.01em;
+    padding:11px 20px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--text);
+    cursor:pointer; transition:border-color .15s, background .15s, transform .05s; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:hover{border-color:var(--accent-dim);}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent); color:#08130f; border-color:var(--accent); font-weight:600;}
+  .btn-primary:hover{background:#5fe0bd;}
+  .btn-danger{border-color:var(--danger); color:var(--danger); background:transparent;}
+  .btn-danger:hover{background:rgba(232,96,76,.08);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-sm{padding:7px 12px; font-size:12px;}
+
+  /* ---------- Capture view ---------- */
+  .capture-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px;}
+  @media (max-width:640px){.capture-grid{grid-template-columns:1fr;}}
+  .capture-tile{
+    border:1px dashed var(--line); border-radius:var(--radius); padding:32px 20px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:12px; cursor:pointer; background:var(--panel);
+    transition:border-color .15s, background .15s;
+  }
+  .capture-tile:hover{border-color:var(--accent-dim); background:var(--panel-2);}
+  .capture-tile .icon{width:44px; height:44px; color:var(--accent);}
+  .capture-tile h3{margin:0; font-family:var(--sans); font-size:16px;}
+  .capture-tile p{margin:0; color:var(--muted); font-size:12.5px; max-width:220px;}
+
+  .tips-box{margin-top:18px; border:1px solid var(--line-soft); border-radius:var(--radius); background:var(--bg-2);}
+  .tips-head{display:flex; justify-content:space-between; align-items:center; padding:13px 16px; cursor:pointer; font-family:var(--sans); font-size:13px; color:var(--accent);}
+  .tips-body{padding:0 16px 16px; color:var(--muted); font-size:13px; line-height:1.65; display:none;}
+  .tips-body.open{display:block;}
+  .tips-body ul{margin:6px 0 0; padding-left:18px;}
+  .tips-body li{margin-bottom:6px;}
+
+  video#camStream{width:100%; max-height:60vh; border-radius:var(--radius); background:#000;}
+  .camera-panel{margin-top:16px;}
+  .camera-actions{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+
+  /* ---------- Workspace ---------- */
+  .workspace{display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start;}
+  @media (max-width:900px){.workspace{grid-template-columns:1fr;}}
+  .canvas-wrap{background:var(--bg-2); border:1px solid var(--line-soft); border-radius:var(--radius); padding:14px; position:relative;}
+  #displayCanvas{width:100%; height:auto; border-radius:6px; cursor:crosshair; touch-action:none; display:block;}
+  .canvas-help{font-size:12px; color:var(--muted); margin-top:10px; font-family:var(--mono);}
+
+  .side{display:flex; flex-direction:column; gap:14px;}
+  .marker-list{display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; padding-right:2px;}
+  .marker-item{
+    border:1px solid var(--line-soft); border-radius:8px; padding:10px 12px; cursor:pointer; background:var(--bg-2);
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .marker-item.selected{border-color:var(--accent); background:rgba(79,209,174,.06);}
+  .marker-item .tag{font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:20px; letter-spacing:.04em;}
+  .tag.known{background:rgba(79,209,174,.15); color:var(--accent);}
+  .tag.unknown{background:rgba(245,166,35,.15); color:var(--accent-2);}
+  .tag.reference{background:rgba(140,163,152,.18); color:var(--muted);}
+  .marker-item .swatch{width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,.25); flex-shrink:0;}
+  .marker-item .mi-main{display:flex; align-items:center; gap:9px; overflow:hidden;}
+  .marker-item .mi-label{font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .marker-item .mi-del{color:var(--muted-2); font-size:14px; padding:2px 6px;}
+  .marker-item .mi-del:hover{color:var(--danger);}
+
+  .field{display:flex; flex-direction:column; gap:5px; margin-bottom:10px;}
+  .field label{font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+  .field select, .field input{
+    background:var(--bg-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:8px 10px; font-size:13px; font-family:var(--body);
+  }
+  .field select:focus, .field input:focus{outline:none; border-color:var(--accent);}
+  .seg{display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+  .seg button{flex:1; padding:8px 6px; background:var(--bg-2); border:none; color:var(--muted); font-size:11.5px; font-family:var(--sans); cursor:pointer;}
+  .seg button.on{background:var(--accent); color:#08130f; font-weight:600;}
+  .seg button.on.unk{background:var(--accent-2); color:#241800;}
+  .seg button.on.ref{background:var(--muted); color:#0b120e;}
+  .row-2{display:grid; grid-template-columns:1fr 90px; gap:8px;}
+
+  /* LCD readout — signature element */
+  .lcd{
+    background:linear-gradient(180deg, #0c1611, #08110d);
+    border:1px solid var(--line-soft); border-radius:8px; padding:14px 16px;
+    font-family:var(--mono); position:relative; overflow:hidden;
+  }
+  .lcd::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(79,209,174,.025) 0px, rgba(79,209,174,.025) 1px, transparent 1px, transparent 3px); pointer-events:none;}
+  .lcd .lcd-row{display:flex; justify-content:space-between; font-size:11px; color:var(--muted-2); margin-bottom:4px; letter-spacing:.05em;}
+  .lcd .lcd-main{font-size:22px; color:var(--accent); text-shadow:0 0 12px rgba(79,209,174,.45); letter-spacing:.02em;}
+  .lcd .lcd-sub{font-size:12px; color:var(--muted); margin-top:6px;}
+
+  hr.div{border:none; border-top:1px solid var(--line-soft); margin:14px 0;}
+
+  /* ---------- Results ---------- */
+  .results-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:18px; align-items:start;}
+  @media (max-width:900px){.results-grid{grid-template-columns:1fr;}}
+  #chartCanvas{width:100%; height:320px; background:var(--bg-2); border:1px solid var(--line-soft); border-radius:var(--radius);}
+  table.res-table{width:100%; border-collapse:collapse; font-size:12.5px; font-family:var(--mono);}
+  table.res-table th{text-align:left; color:var(--muted); font-weight:500; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:8px 8px; border-bottom:1px solid var(--line-soft);}
+  table.res-table td{padding:9px 8px; border-bottom:1px solid var(--line-soft); vertical-align:middle;}
+  table.res-table tr:last-child td{border-bottom:none;}
+  .fit-summary{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-family:var(--mono); font-size:12px;}
+  .fit-summary .fs-item .fs-l{color:var(--muted-2); font-size:10px; text-transform:uppercase;}
+  .fit-summary .fs-item .fs-v{color:var(--accent); font-size:15px;}
+  .warn{color:var(--accent-2); font-size:12px; margin-top:8px; font-family:var(--body);}
+
+  .dataset-bar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line-soft);}
+  .dataset-count{font-family:var(--mono); font-size:12px; color:var(--muted);}
+  .dataset-count b{color:var(--accent);}
+  .actions-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
+    background:var(--panel-2); border:1px solid var(--accent-dim); color:var(--text); padding:11px 18px; border-radius:8px; font-size:13px;
+    font-family:var(--body); transition:opacity .2s, transform .2s; z-index:50; box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .close-x{position:absolute; top:10px; right:10px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer;}
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+</style>
 </head>
 <body>
-<div class="app-shell" id="app">
+<div class="app-shell">
 
-  <!-- LAYER 1 : HEADER -->
-  <div class="layer-header">
-    <h1>🎯 concenTRAK</h1>
-    <span class="badge-layer">multi‑layer · v2</span>
-  </div>
-  <div class="subhead">color intensity → concentration · known calibration</div>
-
-  <!-- LAYER 2 : IMAGE INPUT -->
-  <div class="layer-image">
-    <div class="image-box" id="imageBox">
-      <img id="previewImage" src="" alt="preview" style="display:none;">
-      <span class="placeholder-text" id="placeholderText">📷 tap to upload · drag & drop</span>
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">Colorimeter · v1</span>
+      <h1>Concentration from color intensity</h1>
+      <p>Photograph known standards + your sample, mark them, get a calibrated reading.</p>
     </div>
-    <div class="action-row">
-      <button class="btn btn-primary" id="cameraBtn">📸 Camera</button>
-      <button class="btn btn-outline" id="uploadBtn">🖼️ Upload</button>
-      <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <div class="steps" id="stepsBar">
+      <div class="step active" data-step="1"><span class="n">1</span> Capture</div>
+      <div class="step" data-step="2"><span class="n">2</span> Mark</div>
+      <div class="step" data-step="3"><span class="n">3</span> Results</div>
     </div>
   </div>
 
-  <!-- LAYER 3 : MARKERS (known / unknown) -->
-  <div class="layer-markers">
-    <div class="marker-card">
-      <span class="marker-label">📌 Known conc.</span>
-      <div class="marker-group" id="knownGroup">
-        <button class="marker-btn" data-conc="10">10</button>
-        <button class="marker-btn active" data-conc="25">25</button>
-        <button class="marker-btn" data-conc="50">50</button>
-        <button class="marker-btn" data-conc="100">100</button>
-        <button class="marker-btn" data-conc="200">200</button>
+  <!-- STEP 1: CAPTURE -->
+  <div class="view active" id="view-capture">
+    <div class="capture-grid">
+      <div class="capture-tile" id="tileCamera">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 8.9 4h6.2a1 1 0 0 1 .8.6L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg>
+        <h3>Open camera</h3>
+        <p>Take a fresh photo — keep the standards and sample in one frame, same lighting.</p>
+      </div>
+      <div class="capture-tile" id="tileUpload">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3M12 3v12M7 8l5-5 5 5"/></svg>
+        <h3>Upload image</h3>
+        <p>Use an existing photo from your gallery.</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+    </div>
+
+    <div class="camera-panel card" id="cameraPanel" style="display:none;">
+      <video id="camStream" autoplay playsinline muted></video>
+      <div class="camera-actions">
+        <button class="btn btn-primary" id="btnCapture">Capture photo</button>
+        <button class="btn" id="btnCancelCam">Cancel</button>
+      </div>
+      <p class="warn" id="camError" style="display:none;"></p>
+    </div>
+
+    <div class="tips-box">
+      <div class="tips-head" id="tipsToggle">
+        <span>⚠ Why results drift between phones — and how this app corrects for it</span>
+        <span id="tipsChevron">＋</span>
+      </div>
+      <div class="tips-body" id="tipsBody">
+        <p>Every phone camera has its own white balance, exposure, and color processing, and ambient light shifts colors further. Two fixes matter most:</p>
+        <ul>
+          <li><b>Never compare across photos.</b> All standards + your unknown sample must be in the <i>same</i> image, same device, same light. This app builds a fresh calibration curve from that one photo, so device/lighting bias cancels out — it only cares about relative color differences within the frame.</li>
+          <li><b>Add a plain white or grey reference patch</b> to the photo (e.g. a white card corner). Mark it as "Reference" — the app will white-balance every other reading against it before measuring.</li>
+          <li>Keep the phone steady, avoid flash/glare, use diffuse daylight or consistent indoor light, and place samples against a neutral (white/grey) background.</li>
+          <li>Use at least 3–5 known standards spanning the expected concentration range — interpolation is reliable, extrapolation beyond your standards is not.</li>
+        </ul>
       </div>
     </div>
-    <div class="marker-card">
-      <span class="marker-label">❓ Unknown (X)</span>
-      <div class="marker-group" id="unknownGroup">
-        <button class="marker-btn unknown" data-conc="unknown">⚡ sample X</button>
+  </div>
+
+  <!-- STEP 2: MARK -->
+  <div class="view" id="view-mark">
+    <div class="workspace">
+      <div class="canvas-wrap">
+        <canvas id="displayCanvas"></canvas>
+        <p class="canvas-help">Tap on a standard/sample to drop a marker. Tap an existing marker to select &amp; edit it. Drag to reposition.</p>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2 class="sec-title">Markers <span class="muted" id="markerCountLbl">(0)</span></h2>
+          <div class="marker-list" id="markerList"></div>
+          <hr class="div">
+          <div id="editorEmpty" class="muted" style="font-size:12.5px;">Select or add a marker to edit it.</div>
+          <div id="editor" style="display:none;">
+            <div class="field">
+              <label>Type</label>
+              <div class="seg">
+                <button type="button" data-type="known" id="segKnown">Known</button>
+                <button type="button" data-type="unknown" id="segUnknown">Unknown</button>
+                <button type="button" data-type="reference" id="segReference">Reference</button>
+              </div>
+            </div>
+            <div class="field" id="labelField">
+              <label>Label</label>
+              <input type="text" id="inpLabel" placeholder="e.g. Std 25 mg/L">
+            </div>
+            <div class="row-2" id="concField">
+              <div class="field" style="margin-bottom:0;">
+                <label>Known concentration</label>
+                <input type="number" step="any" id="inpConc" placeholder="e.g. 25">
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label>Unit</label>
+                <input type="text" id="inpUnit" placeholder="mg/L" value="mg/L">
+              </div>
+            </div>
+            <div class="field">
+              <label>Marker size</label>
+              <input type="range" id="inpRadius" min="1" max="12" step="0.5" value="4">
+            </div>
+            <button class="btn btn-danger btn-sm" id="btnDeleteMarker" style="width:100%; justify-content:center;">Delete marker</button>
+          </div>
+        </div>
+
+        <div class="lcd" id="lcdBox">
+          <div class="lcd-row"><span>LIVE READOUT</span><span id="lcdMarkerId">— NO MARKER —</span></div>
+          <div class="lcd-main" id="lcdMain">R -- G -- B --</div>
+          <div class="lcd-sub" id="lcdSub">Add markers to sample color</div>
+        </div>
+
+        <div class="card">
+          <div class="field" style="margin-bottom:8px;">
+            <label>Response channel (used for the calibration curve)</label>
+            <select id="selChannel">
+              <option value="lum">Luminance (recommended default)</option>
+              <option value="r">Red channel</option>
+              <option value="g">Green channel</option>
+              <option value="b">Blue channel</option>
+              <option value="labL">Lab L*</option>
+              <option value="laba">Lab a*</option>
+              <option value="labb">Lab b*</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Fit against</label>
+            <select id="selMetric">
+              <option value="absorbance">Absorbance (−log₁₀ I/255) — Beer–Lambert, usually most linear</option>
+              <option value="intensity">Raw intensity</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btnAnalyze" style="width:100%; justify-content:center;">Analyze &amp; calibrate →</button>
       </div>
     </div>
-    <div class="custom-known-row">
-      <span style="font-weight:400; color:#1e3b5e;">➕ add known:</span>
-      <input type="number" id="customKnownInput" placeholder="e.g. 75">
-      <button id="addCustomKnownBtn">Add</button>
+  </div>
+
+  <!-- STEP 3: RESULTS -->
+  <div class="view" id="view-results">
+    <div class="results-grid">
+      <div class="card">
+        <h2 class="sec-title">Calibration curve</h2>
+        <canvas id="chartCanvas"></canvas>
+        <div class="fit-summary" id="fitSummary"></div>
+        <p class="warn" id="fitWarning" style="display:none;"></p>
+      </div>
+      <div class="card">
+        <h2 class="sec-title">Readings</h2>
+        <table class="res-table" id="resTable">
+          <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Response</th><th>Conc.</th></tr></thead>
+          <tbody id="resTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h2 class="sec-title">ML dataset (this session)</h2>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px;">Each "Save reading" adds this photo's markers, colors and concentrations as one record — export it to accumulate training data across sessions/devices.</p>
+      <div class="dataset-bar">
+        <span class="dataset-count">Saved this session: <b id="datasetCount">0</b> record(s), <b id="datasetMarkerCount">0</b> marker rows</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-sm" id="btnSaveRecord">Save this reading to dataset</button>
+          <button class="btn btn-sm" id="btnExportJSON">Export JSON</button>
+          <button class="btn btn-sm" id="btnExportCSV">Export CSV</button>
+          <button class="btn btn-sm btn-danger" id="btnClearDataset">Clear session</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn" id="btnBackToMark">← Back to markers</button>
+      <button class="btn" id="btnNewAnalysis">Start a new photo</button>
     </div>
   </div>
 
-  <!-- LAYER 4 : RESULT + mini chart -->
-  <div class="layer-result">
-    <div class="result-item">
-      <span class="result-label">📊 intensity (avg)</span>
-      <span class="result-value" id="intensityDisplay">—</span>
-    </div>
-    <div class="result-item">
-      <span class="result-label">🧪 concentration</span>
-      <span class="result-value" id="concentrationDisplay">— <small></small></span>
-    </div>
-    <div class="mini-chart-wrap">
-      <canvas id="intensityChart" width="200" height="30"></canvas>
-    </div>
-  </div>
-
-  <!-- LAYER 5 : SAVE & LOG -->
-  <div class="layer-save">
-    <button class="btn-save" id="saveDataBtn">💾 save data (ML)</button>
-  </div>
-  <div class="layer-log" id="logArea">
-    <div class="log-entry">📋 ready · capture or upload image</div>
-  </div>
-  <div class="footnote">⚡ accurate intensity · known calibration reduces environment variance</div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-  (function() {
-    // ---- DOM refs ----
-    const previewImg = document.getElementById('previewImage');
-    const placeholder = document.getElementById('placeholderText');
-    const fileInput = document.getElementById('fileInput');
-    const cameraBtn = document.getElementById('cameraBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const intensityDisplay = document.getElementById('intensityDisplay');
-    const concentrationDisplay = document.getElementById('concentrationDisplay');
-    const logArea = document.getElementById('logArea');
-    const saveBtn = document.getElementById('saveDataBtn');
-    const knownBtns = document.querySelectorAll('#knownGroup .marker-btn');
-    const unknownBtns = document.querySelectorAll('#unknownGroup .marker-btn');
-    const customKnownInput = document.getElementById('customKnownInput');
-    const addCustomBtn = document.getElementById('addCustomKnownBtn');
-    const imageBox = document.getElementById('imageBox');
+/* ============================= STATE ============================= */
+const state = {
+  sourceCanvas: document.createElement('canvas'),   // holds full-resolution untouched image
+  sourceCtx: null,
+  imageData: null,        // cached full-res pixel buffer
+  imgW: 0, imgH: 0,
+  markers: [],            // {id, x,y,r (relative 0-1), type, label, conc, unit, sampled:{r,g,b,l,a,bLab,lum}, response, resultConc}
+  selectedId: null,
+  nextId: 1,
+  fit: null,              // {slope, intercept, r2, channel, metric, refUsed}
+  camStream: null,
+  dataset: []             // in-memory session dataset
+};
 
-    // ---- state ----
-    let currentIntensity = null;
-    let selectedKnownConc = 25;
-    let isUnknownSelected = false;
-    let lastConcentrationResult = null;
-    let chartInstance = null;
+const displayCanvas = document.getElementById('displayCanvas');
+const dctx = displayCanvas.getContext('2d');
+state.sourceCtx = state.sourceCanvas.getContext('2d', {willReadFrequently:true});
 
-    // store reference
-    window._lastKnownIntensity = null;
-    window._lastKnownConc = null;
+/* ============================= UTIL ============================= */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function setStep(n){
+  document.querySelectorAll('.step').forEach(s=>{
+    const sn = +s.dataset.step;
+    s.classList.toggle('active', sn===n);
+    s.classList.toggle('done', sn<n);
+  });
+  document.getElementById('view-capture').classList.toggle('active', n===1);
+  document.getElementById('view-mark').classList.toggle('active', n===2);
+  document.getElementById('view-results').classList.toggle('active', n===3);
+}
 
-    // ---- helpers ----
-    function addLog(message, type = 'info') {
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      const badge = type === 'unknown' ? '<span class="badge unknown-badge">unknown</span>' : '<span class="badge">known</span>';
-      entry.innerHTML = `${badge} ${message}`;
-      logArea.prepend(entry);
-      if (logArea.children.length > 20) logArea.removeChild(logArea.lastChild);
-    }
+/* ============================= COLOR SCIENCE ============================= */
+function srgbToLinear(c){ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+function rgbToXyz(r,g,b){
+  const R=srgbToLinear(r), G=srgbToLinear(g), B=srgbToLinear(b);
+  const X = R*0.4124564 + G*0.3575761 + B*0.1804375;
+  const Y = R*0.2126729 + G*0.7151522 + B*0.0721750;
+  const Z = R*0.0193339 + G*0.1191920 + B*0.9503041;
+  return [X,Y,Z];
+}
+function xyzToLab(X,Y,Z){
+  const Xn=0.95047, Yn=1.0, Zn=1.08883;
+  const f = t => t>0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
+  const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
+  const L = 116*fy-16, a = 500*(fx-fy), b = 200*(fy-fz);
+  return [L,a,b];
+}
+function rgbToLab(r,g,b){ const [x,y,z]=rgbToXyz(r,g,b); return xyzToLab(x,y,z); }
+function luminance(r,g,b){ return 0.2126*r + 0.7152*g + 0.0722*b; } // perceptual, 0-255 scale
 
-    // ---- intensity extraction (central crop) ----
-    function extractIntensityFromImage(source) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          let w = img.width, h = img.height;
-          const maxDim = 400;
-          if (w > maxDim || h > maxDim) {
-            const ratio = Math.min(maxDim/w, maxDim/h);
-            w = Math.floor(w * ratio);
-            h = Math.floor(h * ratio);
-          }
-          canvas.width = w;
-          canvas.height = h;
-          ctx.drawImage(img, 0, 0, w, h);
-          const imageData = ctx.getImageData(0, 0, w, h);
-          const data = imageData.data;
-          let total = 0, count = 0;
-          const startX = Math.floor(w * 0.2), endX = Math.floor(w * 0.8);
-          const startY = Math.floor(h * 0.2), endY = Math.floor(h * 0.8);
-          for (let y = startY; y < endY; y++) {
-            for (let x = startX; x < endX; x++) {
-              const idx = (y * w + x) * 4;
-              const gray = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
-              total += gray;
-              count++;
-            }
-          }
-          const avg = count > 0 ? total / count : 128;
-          resolve(avg);
-        };
-        img.onerror = () => resolve(null);
-        if (source instanceof File || source instanceof Blob) {
-          const reader = new FileReader();
-          reader.onload = (e) => { img.src = e.target.result; };
-          reader.readAsDataURL(source);
-        } else if (typeof source === 'string') {
-          img.src = source;
-        } else {
-          resolve(null);
-        }
-      });
-    }
+/* ============================= IMAGE LOADING ============================= */
+function loadImageToSource(imgEl){
+  const MAX_DIM = 1600;
+  let w = imgEl.naturalWidth || imgEl.videoWidth, h = imgEl.naturalHeight || imgEl.videoHeight;
+  const scale = Math.min(1, MAX_DIM / Math.max(w,h));
+  w = Math.round(w*scale); h = Math.round(h*scale);
+  state.sourceCanvas.width = w; state.sourceCanvas.height = h;
+  state.sourceCtx.drawImage(imgEl, 0, 0, w, h);
+  state.imgW = w; state.imgH = h;
+  state.imageData = state.sourceCtx.getImageData(0,0,w,h);
+  state.markers = []; state.selectedId = null; state.fit = null;
+  redrawDisplay();
+  renderMarkerList();
+  showEditor(null);
+  setStep(2);
+  stopCamera();
+}
 
-    // ---- update UI ----
-    function updateConcentration(intensity) {
-      if (intensity === null || intensity === undefined) {
-        intensityDisplay.textContent = '—';
-        concentrationDisplay.innerHTML = '—';
-        return;
-      }
-      const rounded = Math.round(intensity * 10) / 10;
-      intensityDisplay.textContent = rounded;
+function redrawDisplay(){
+  const maxW = 760;
+  const scale = Math.min(1, maxW / state.imgW);
+  displayCanvas.width = Math.round(state.imgW*scale);
+  displayCanvas.height = Math.round(state.imgH*scale);
+  dctx.drawImage(state.sourceCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+  // draw markers
+  state.markers.forEach(m=>{
+    const cx = m.x*displayCanvas.width, cy = m.y*displayCanvas.height;
+    const rr = m.r*Math.min(displayCanvas.width, displayCanvas.height);
+    dctx.beginPath();
+    dctx.arc(cx, cy, rr, 0, Math.PI*2);
+    dctx.lineWidth = (m.id===state.selectedId) ? 3 : 2;
+    dctx.strokeStyle = m.type==='known' ? '#4FD1AE' : m.type==='reference' ? '#8CA398' : '#F5A623';
+    dctx.stroke();
+    dctx.fillStyle = 'rgba(0,0,0,.55)';
+    dctx.font = '11px IBM Plex Mono, monospace';
+    const tagTxt = '#'+m.id;
+    const tw = dctx.measureText(tagTxt).width;
+    dctx.fillRect(cx-tw/2-4, cy-rr-20, tw+8, 16);
+    dctx.fillStyle = '#E8EDE9';
+    dctx.fillText(tagTxt, cx-tw/2, cy-rr-8);
+  });
+}
 
-      let resultConc = null;
-      let knownIntensityRef = window._lastKnownIntensity || intensity;
-      let knownConcRef = window._lastKnownConc || selectedKnownConc;
-
-      if (isUnknownSelected && window._lastKnownIntensity && window._lastKnownConc) {
-        const knownIntensity = window._lastKnownIntensity;
-        const knownConc = window._lastKnownConc;
-        if (knownIntensity > 0) {
-          resultConc = (intensity / knownIntensity) * knownConc;
-          resultConc = Math.round(resultConc * 100) / 100;
-        } else {
-          resultConc = intensity / 2;
-        }
-        concentrationDisplay.innerHTML = `${resultConc} <small> (from X)</small>`;
-        lastConcentrationResult = resultConc;
-        addLog(`Unknown → conc ~ ${resultConc} (intensity ${rounded})`, 'unknown');
-      } else {
-        // known mode
-        const knownConc = selectedKnownConc;
-        concentrationDisplay.innerHTML = `${knownConc} <small> (std)</small>`;
-        resultConc = knownConc;
-        window._lastKnownIntensity = intensity;
-        window._lastKnownConc = knownConc;
-        lastConcentrationResult = knownConc;
-        addLog(`Known ${knownConc} · intensity ${rounded} (ref)`, 'info');
-      }
-      // chart
-      updateMiniChart(intensity, resultConc);
-    }
-
-    function updateMiniChart(intensity, conc) {
-      const ctx = document.getElementById('intensityChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
-      if (!intensity) return;
-      const data = {
-        labels: ['intensity', 'conc (scaled)'],
-        datasets: [{
-          data: [intensity, conc ? Math.min(conc, 255) : 0],
-          backgroundColor: ['#2b7be4', '#b3893c'],
-          borderRadius: 6,
-        }]
-      };
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: data,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, max: 255, display: false }, x: { display: false } }
-        }
-      });
-    }
-
-    async function processImage(source) {
-      const intensity = await extractIntensityFromImage(source);
-      if (intensity === null) {
-        addLog('⚠️ could not extract intensity', 'info');
-        return;
-      }
-      currentIntensity = intensity;
-      updateConcentration(intensity);
-      if (source instanceof File || source instanceof Blob) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          previewImg.src = e.target.result;
-          previewImg.style.display = 'block';
-          placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(source);
-      } else if (typeof source === 'string') {
-        previewImg.src = source;
-        previewImg.style.display = 'block';
-        placeholder.style.display = 'none';
+/* ============================= SAMPLING ============================= */
+function sampleMarker(m){
+  const w = state.imgW, h = state.imgH, data = state.imageData.data;
+  const cx = m.x*w, cy = m.y*h, r = m.r*Math.min(w,h);
+  const x0 = Math.max(0, Math.floor(cx-r)), x1 = Math.min(w-1, Math.ceil(cx+r));
+  const y0 = Math.max(0, Math.floor(cy-r)), y1 = Math.min(h-1, Math.ceil(cy+r));
+  let sr=0, sg=0, sb=0, n=0;
+  for(let y=y0; y<=y1; y++){
+    for(let x=x0; x<=x1; x++){
+      const dx=x-cx, dy=y-cy;
+      if(dx*dx+dy*dy <= r*r){
+        const idx = (y*w+x)*4;
+        sr += data[idx]; sg += data[idx+1]; sb += data[idx+2]; n++;
       }
     }
+  }
+  if(n===0) return {r:0,g:0,b:0,n:0};
+  return {r: sr/n, g: sg/n, b: sb/n, n};
+}
 
-    // ---- event listeners ----
-    cameraBtn.addEventListener('click', () => fileInput.click());
-    uploadBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      processImage(file);
-      fileInput.value = '';
+function sampleAllMarkers(){
+  const ref = state.markers.find(m=>m.type==='reference');
+  let corr = {r:1,g:1,b:1};
+  if(ref){
+    const rs = sampleMarker(ref);
+    corr = { r: rs.r>0 ? 255/rs.r : 1, g: rs.g>0 ? 255/rs.g : 1, b: rs.b>0 ? 255/rs.b : 1 };
+  }
+  state.markers.forEach(m=>{
+    const raw = sampleMarker(m);
+    let r = Math.min(255, raw.r*corr.r), g = Math.min(255, raw.g*corr.g), b = Math.min(255, raw.b*corr.b);
+    const [L,a,bb] = rgbToLab(r,g,b);
+    m.sampled = { r, g, b, L, a, bLab: bb, lum: luminance(r,g,b), rawR: raw.r, rawG: raw.g, rawB: raw.b };
+  });
+  return !!ref;
+}
+
+/* ============================= MARKER CRUD ============================= */
+function hitTestMarker(px, py){
+  // px,py in displayCanvas pixel coords
+  for(let i=state.markers.length-1; i>=0; i--){
+    const m = state.markers[i];
+    const cx = m.x*displayCanvas.width, cy = m.y*displayCanvas.height;
+    const rr = m.r*Math.min(displayCanvas.width, displayCanvas.height);
+    const dx=px-cx, dy=py-cy;
+    if(dx*dx+dy*dy <= rr*rr) return m;
+  }
+  return null;
+}
+function addMarker(xRel, yRel){
+  const m = { id: state.nextId++, x:xRel, y:yRel, r:0.04, type:'unknown', label:'', conc:'', unit:'mg/L' };
+  state.markers.push(m);
+  selectMarker(m.id);
+  redrawDisplay(); renderMarkerList();
+}
+function selectMarker(id){
+  state.selectedId = id;
+  redrawDisplay(); renderMarkerList(); showEditor(state.markers.find(m=>m.id===id));
+}
+function deleteMarker(id){
+  state.markers = state.markers.filter(m=>m.id!==id);
+  if(state.selectedId===id) state.selectedId=null;
+  redrawDisplay(); renderMarkerList(); showEditor(null);
+}
+
+function renderMarkerList(){
+  const list = document.getElementById('markerList');
+  document.getElementById('markerCountLbl').textContent = `(${state.markers.length})`;
+  list.innerHTML = '';
+  state.markers.forEach(m=>{
+    const el = document.createElement('div');
+    el.className = 'marker-item' + (m.id===state.selectedId ? ' selected' : '');
+    const colorHex = m.sampled ? rgbToHex(m.sampled.r,m.sampled.g,m.sampled.b) : '#333';
+    el.innerHTML = `
+      <div class="mi-main">
+        <span class="swatch" style="background:${colorHex}"></span>
+        <span class="mi-label">#${m.id} ${m.label ? '· '+escapeHtml(m.label) : ''}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="tag ${m.type}">${m.type}</span>
+        <span class="mi-del" data-del="${m.id}">✕</span>
+      </div>`;
+    el.addEventListener('click', (e)=>{
+      if(e.target.dataset.del){ deleteMarker(+e.target.dataset.del); return; }
+      selectMarker(m.id);
     });
+    list.appendChild(el);
+  });
+}
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''); }
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-    // known markers
-    knownBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        knownBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedKnownConc = parseFloat(btn.dataset.conc);
-        isUnknownSelected = false;
-        unknownBtns.forEach(b => b.classList.remove('active'));
-        if (currentIntensity !== null) {
-          window._lastKnownIntensity = currentIntensity;
-          window._lastKnownConc = selectedKnownConc;
-          updateConcentration(currentIntensity);
-        } else {
-          concentrationDisplay.innerHTML = `${selectedKnownConc} <small> (std)</small>`;
-          addLog(`Known set to ${selectedKnownConc}`, 'info');
-        }
-      });
+/* ============================= EDITOR ============================= */
+function showEditor(m){
+  const empty = document.getElementById('editorEmpty'), ed = document.getElementById('editor');
+  if(!m){ empty.style.display='block'; ed.style.display='none'; updateLCD(null); return; }
+  empty.style.display='none'; ed.style.display='block';
+  setSeg(m.type);
+  document.getElementById('inpLabel').value = m.label || '';
+  document.getElementById('inpConc').value = m.conc ?? '';
+  document.getElementById('inpUnit').value = m.unit || 'mg/L';
+  document.getElementById('inpRadius').value = (m.r*100).toFixed(1);
+  document.getElementById('concField').style.display = m.type==='known' ? 'grid' : 'none';
+  updateLCD(m);
+}
+function setSeg(type){
+  ['known','unknown','reference'].forEach(t=>{
+    document.getElementById('seg'+t[0].toUpperCase()+t.slice(1)).classList.toggle('on', t===type);
+  });
+  const kb = document.getElementById('segKnown'), ub=document.getElementById('segUnknown'), rb=document.getElementById('segReference');
+  kb.classList.remove('unk'); ub.classList.toggle('unk', type==='unknown');
+  rb.classList.toggle('ref', type==='reference');
+}
+function updateLCD(m){
+  const idEl = document.getElementById('lcdMarkerId'), mainEl = document.getElementById('lcdMain'), subEl = document.getElementById('lcdSub');
+  if(!m){ idEl.textContent='— NO MARKER —'; mainEl.textContent='R -- G -- B --'; subEl.textContent='Add markers to sample color'; return; }
+  const s = sampleMarker(m);
+  idEl.textContent = `MARKER #${m.id} · ${m.type.toUpperCase()}`;
+  mainEl.textContent = `R ${s.r.toFixed(0)}  G ${s.g.toFixed(0)}  B ${s.b.toFixed(0)}`;
+  const lum = luminance(s.r,s.g,s.b);
+  subEl.textContent = `Luminance ${lum.toFixed(1)} / 255   ·   n=${s.n}px sampled`;
+}
+
+document.getElementById('segKnown').onclick = ()=>updateType('known');
+document.getElementById('segUnknown').onclick = ()=>updateType('unknown');
+document.getElementById('segReference').onclick = ()=>updateType('reference');
+function updateType(type){
+  const m = state.markers.find(x=>x.id===state.selectedId); if(!m) return;
+  m.type = type; showEditor(m); redrawDisplay(); renderMarkerList();
+}
+document.getElementById('inpLabel').oninput = e=>{ const m=curM(); if(m){ m.label=e.target.value; renderMarkerList(); } };
+document.getElementById('inpConc').oninput = e=>{ const m=curM(); if(m) m.conc = e.target.value; };
+document.getElementById('inpUnit').oninput = e=>{ const m=curM(); if(m) m.unit = e.target.value; };
+document.getElementById('inpRadius').oninput = e=>{ const m=curM(); if(m){ m.r = (+e.target.value)/100; redrawDisplay(); updateLCD(m);} };
+document.getElementById('btnDeleteMarker').onclick = ()=>{ if(state.selectedId) deleteMarker(state.selectedId); };
+function curM(){ return state.markers.find(m=>m.id===state.selectedId); }
+
+/* ============================= CANVAS INTERACTION ============================= */
+let dragging = null, dragMoved = false, dragStart=null;
+function canvasPos(e){
+  const rect = displayCanvas.getBoundingClientRect();
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  const scaleX = displayCanvas.width/rect.width, scaleY = displayCanvas.height/rect.height;
+  return { x: cx*scaleX, y: cy*scaleY };
+}
+function onDown(e){
+  e.preventDefault();
+  const p = canvasPos(e);
+  const hit = hitTestMarker(p.x, p.y);
+  dragStart = p; dragMoved=false;
+  if(hit){ dragging = hit; selectMarker(hit.id); } else { dragging=null; }
+}
+function onMove(e){
+  if(!dragStart) return;
+  const p = canvasPos(e);
+  if(dragging){
+    dragMoved = true;
+    dragging.x = Math.min(1,Math.max(0, p.x/displayCanvas.width));
+    dragging.y = Math.min(1,Math.max(0, p.y/displayCanvas.height));
+    redrawDisplay();
+  }
+}
+function onUp(e){
+  if(!dragStart) return;
+  const p = canvasPos(e);
+  if(!dragging && !dragMoved){
+    const xr = p.x/displayCanvas.width, yr = p.y/displayCanvas.height;
+    if(xr>=0 && xr<=1 && yr>=0 && yr<=1) addMarker(xr, yr);
+  } else if(dragging){
+    updateLCD(dragging); renderMarkerList();
+  }
+  dragging=null; dragStart=null; dragMoved=false;
+}
+displayCanvas.addEventListener('mousedown', onDown);
+displayCanvas.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+displayCanvas.addEventListener('touchstart', onDown, {passive:false});
+displayCanvas.addEventListener('touchmove', onMove, {passive:false});
+window.addEventListener('touchend', onUp);
+
+/* ============================= CAPTURE: CAMERA / UPLOAD ============================= */
+const fileInput = document.getElementById('fileInput');
+document.getElementById('tileUpload').onclick = ()=>fileInput.click();
+fileInput.onchange = e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const img = new Image();
+  img.onload = ()=>loadImageToSource(img);
+  img.src = URL.createObjectURL(file);
+};
+
+document.getElementById('tileCamera').onclick = startCamera;
+async function startCamera(){
+  const panel = document.getElementById('cameraPanel');
+  const errEl = document.getElementById('camError');
+  errEl.style.display='none';
+  panel.style.display='block';
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal:'environment' } }, audio:false });
+    state.camStream = stream;
+    const video = document.getElementById('camStream');
+    video.srcObject = stream;
+  }catch(err){
+    errEl.textContent = 'Camera permission was denied, or the camera is unavailable in this preview (embedded previews often block camera access). Try opening this file directly in your phone/desktop browser instead of the in-chat preview, or use "Upload image".';
+    errEl.style.display='block';
+  }
+}
+function stopCamera(){
+  if(state.camStream){ state.camStream.getTracks().forEach(t=>t.stop()); state.camStream=null; }
+  document.getElementById('cameraPanel').style.display='none';
+}
+document.getElementById('btnCancelCam').onclick = stopCamera;
+document.getElementById('btnCapture').onclick = ()=>{
+  const video = document.getElementById('camStream');
+  if(!video.videoWidth){ toast('Camera not ready yet'); return; }
+  loadImageToSource(video);
+};
+
+/* ============================= TIPS TOGGLE ============================= */
+document.getElementById('tipsToggle').onclick = ()=>{
+  const body = document.getElementById('tipsBody');
+  body.classList.toggle('open');
+  document.getElementById('tipsChevron').textContent = body.classList.contains('open') ? '−' : '＋';
+};
+
+/* ============================= ANALYZE / REGRESSION ============================= */
+document.getElementById('btnAnalyze').onclick = analyze;
+function analyze(){
+  const knownCount = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null).length;
+  if(knownCount < 2){ toast('Add at least 2 known-concentration markers with values first'); return; }
+  const refUsed = sampleAllMarkers();
+  const channel = document.getElementById('selChannel').value;
+  const metric = document.getElementById('selMetric').value;
+
+  function respOf(m){
+    let base;
+    switch(channel){
+      case 'r': base = m.sampled.r; break;
+      case 'g': base = m.sampled.g; break;
+      case 'b': base = m.sampled.b; break;
+      case 'labL': return m.sampled.L;
+      case 'laba': return m.sampled.a;
+      case 'labb': return m.sampled.bLab;
+      default: base = m.sampled.lum;
+    }
+    if(metric==='absorbance'){
+      const norm = Math.min(254.9, Math.max(0.1, base));
+      return -Math.log10(norm/255);
+    }
+    return base;
+  }
+  state.markers.forEach(m=>{ if(m.sampled) m.response = respOf(m); });
+
+  const knowns = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null);
+  const xs = knowns.map(m=>parseFloat(m.conc)), ys = knowns.map(m=>m.response);
+  const n = xs.length;
+  const sx=xs.reduce((a,b)=>a+b,0), sy=ys.reduce((a,b)=>a+b,0);
+  const mx=sx/n, my=sy/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)*(xs[i]-mx); }
+  const slope = den===0 ? 0 : num/den;
+  const intercept = my - slope*mx;
+  let ssTot=0, ssRes=0;
+  for(let i=0;i<n;i++){ const pred = slope*xs[i]+intercept; ssRes += (ys[i]-pred)**2; ssTot += (ys[i]-my)**2; }
+  const r2 = ssTot===0 ? 1 : 1 - ssRes/ssTot;
+
+  state.markers.forEach(m=>{
+    if(m.type==='known'){ m.resultConc = parseFloat(m.conc); }
+    else if(m.type==='unknown' && m.response!=null){ m.resultConc = slope===0 ? NaN : (m.response - intercept)/slope; }
+  });
+
+  state.fit = { slope, intercept, r2, channel, metric, refUsed, xs, ys };
+  renderResults();
+  setStep(3);
+}
+
+/* ============================= RESULTS RENDERING ============================= */
+function renderResults(){
+  const fs = document.getElementById('fitSummary');
+  fs.innerHTML = `
+    <div class="fs-item"><div class="fs-l">Slope</div><div class="fs-v">${state.fit.slope.toFixed(5)}</div></div>
+    <div class="fs-item"><div class="fs-l">Intercept</div><div class="fs-v">${state.fit.intercept.toFixed(4)}</div></div>
+    <div class="fs-item"><div class="fs-l">R²</div><div class="fs-v">${state.fit.r2.toFixed(4)}</div></div>
+    <div class="fs-item"><div class="fs-l">Reference used</div><div class="fs-v">${state.fit.refUsed ? 'Yes' : 'No'}</div></div>
+  `;
+  const warnEl = document.getElementById('fitWarning');
+  if(state.fit.r2 < 0.9){
+    warnEl.style.display='block';
+    warnEl.textContent = `R² is ${state.fit.r2.toFixed(3)} — the fit is weak. Try more/better-spread standards, a reference patch, or a different response channel.`;
+  } else warnEl.style.display='none';
+
+  const body = document.getElementById('resTableBody');
+  body.innerHTML='';
+  state.markers.forEach(m=>{
+    if(!m.sampled) return;
+    const tr = document.createElement('tr');
+    const swatch = `<span class="swatch" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${rgbToHex(m.sampled.r,m.sampled.g,m.sampled.b)};border:1px solid rgba(255,255,255,.25)"></span>`;
+    const concTxt = m.type==='reference' ? '—' : (isFinite(m.resultConc) ? m.resultConc.toFixed(3)+' '+(m.unit||'') : '—');
+    tr.innerHTML = `<td>${swatch}</td><td>${escapeHtml(m.label||('#'+m.id))}</td><td><span class="tag ${m.type}">${m.type}</span></td>
+      <td>${m.sampled.r.toFixed(0)},${m.sampled.g.toFixed(0)},${m.sampled.b.toFixed(0)}</td>
+      <td>${m.response!=null ? m.response.toFixed(4) : '—'}</td><td>${concTxt}</td>`;
+    body.appendChild(tr);
+  });
+
+  drawChart();
+}
+
+function drawChart(){
+  const canvas = document.getElementById('chartCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 500, cssH = 300;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const knowns = state.markers.filter(m=>m.type==='known' && m.resultConc!=null && m.response!=null);
+  const unknowns = state.markers.filter(m=>m.type==='unknown' && m.response!=null);
+  if(knowns.length===0){ return; }
+
+  const allX = knowns.map(m=>m.resultConc).concat(unknowns.map(m=>m.resultConc).filter(isFinite));
+  const allY = knowns.map(m=>m.response).concat(unknowns.map(m=>m.response));
+  const xMin = Math.min(...allX,0), xMax = Math.max(...allX)*1.1 || 1;
+  const yMin = Math.min(...allY)*0.9, yMax = Math.max(...allY)*1.1 || 1;
+  const pad = {l:46,r:16,t:16,b:36};
+  const px = x => pad.l + (x-xMin)/(xMax-xMin||1) * (cssW-pad.l-pad.r);
+  const py = y => cssH-pad.b - (y-yMin)/(yMax-yMin||1) * (cssH-pad.t-pad.b);
+
+  ctx.strokeStyle = '#2A3A30'; ctx.lineWidth=1; ctx.font='10px IBM Plex Mono, monospace'; ctx.fillStyle='#8CA398';
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, cssH-pad.b); ctx.lineTo(cssW-pad.r, cssH-pad.b); ctx.stroke();
+  for(let i=0;i<=4;i++){
+    const yv = yMin + (yMax-yMin)*i/4;
+    const yy = py(yv);
+    ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(cssW-pad.r,yy); ctx.stroke();
+    ctx.fillText(yv.toFixed(2), 4, yy+3);
+  }
+  for(let i=0;i<=4;i++){
+    const xv = xMin + (xMax-xMin)*i/4;
+    ctx.fillText(xv.toFixed(1), px(xv)-8, cssH-pad.b+14);
+  }
+
+  // regression line
+  ctx.strokeStyle = '#4FD1AE'; ctx.lineWidth=1.6;
+  ctx.beginPath();
+  ctx.moveTo(px(xMin), py(state.fit.slope*xMin+state.fit.intercept));
+  ctx.lineTo(px(xMax), py(state.fit.slope*xMax+state.fit.intercept));
+  ctx.stroke();
+
+  knowns.forEach(m=>{
+    ctx.beginPath(); ctx.fillStyle = '#4FD1AE';
+    ctx.arc(px(m.resultConc), py(m.response), 4, 0, Math.PI*2); ctx.fill();
+  });
+  unknowns.forEach(m=>{
+    if(!isFinite(m.resultConc)) return;
+    const x=px(m.resultConc), y=py(m.response);
+    ctx.fillStyle='#F5A623';
+    ctx.beginPath(); ctx.moveTo(x,y-5); ctx.lineTo(x+5,y); ctx.lineTo(x,y+5); ctx.lineTo(x-5,y); ctx.closePath(); ctx.fill();
+  });
+}
+
+/* ============================= DATASET (session-only, export to persist) ============================= */
+function updateDatasetCounters(){
+  document.getElementById('datasetCount').textContent = state.dataset.length;
+  document.getElementById('datasetMarkerCount').textContent = state.dataset.reduce((a,r)=>a+r.markers.length,0);
+}
+document.getElementById('btnSaveRecord').onclick = ()=>{
+  if(!state.fit){ toast('Run Analyze first'); return; }
+  const thumb = document.createElement('canvas');
+  const scale = Math.min(1, 260/state.imgW);
+  thumb.width = Math.round(state.imgW*scale); thumb.height = Math.round(state.imgH*scale);
+  thumb.getContext('2d').drawImage(state.sourceCanvas, 0,0, thumb.width, thumb.height);
+  const record = {
+    id: 'rec_'+Date.now(),
+    timestamp: new Date().toISOString(),
+    device: navigator.userAgent,
+    imageThumbnail: thumb.toDataURL('image/jpeg', 0.6),
+    fit: state.fit,
+    markers: state.markers.filter(m=>m.sampled).map(m=>({
+      markerId: m.id, type: m.type, label: m.label, unit: m.unit,
+      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab,
+      response: m.response, concentration: isFinite(m.resultConc) ? m.resultConc : null
+    }))
+  };
+  state.dataset.push(record);
+  updateDatasetCounters();
+  toast('Saved to session dataset — remember to export before closing the tab');
+};
+document.getElementById('btnExportJSON').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  downloadBlob(JSON.stringify(state.dataset, null, 2), 'colorimeter_dataset.json', 'application/json');
+};
+document.getElementById('btnExportCSV').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  const rows = [['record_id','timestamp','device','fit_channel','fit_metric','fit_slope','fit_intercept','fit_r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration']];
+  state.dataset.forEach(rec=>{
+    rec.markers.forEach(m=>{
+      rows.push([rec.id, rec.timestamp, JSON.stringify(rec.device), rec.fit.channel, rec.fit.metric, rec.fit.slope, rec.fit.intercept, rec.fit.r2,
+        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
     });
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  downloadBlob(csv, 'colorimeter_dataset.csv', 'text/csv');
+};
+document.getElementById('btnClearDataset').onclick = ()=>{
+  if(confirm('Clear all session-saved records? (Export first if you want to keep them.)')){
+    state.dataset = []; updateDatasetCounters();
+  }
+};
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
 
-    // unknown markers
-    unknownBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        unknownBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        isUnknownSelected = true;
-        knownBtns.forEach(b => b.classList.remove('active'));
-        if (currentIntensity !== null && window._lastKnownIntensity) {
-          updateConcentration(currentIntensity);
-        } else {
-          addLog('⚠️ set a known concentration first (reference)', 'info');
-        }
-      });
-    });
+/* ============================= NAV ============================= */
+document.getElementById('btnBackToMark').onclick = ()=>setStep(2);
+document.getElementById('btnNewAnalysis').onclick = ()=>{
+  state.markers=[]; state.selectedId=null; state.fit=null; state.imageData=null;
+  setStep(1);
+};
 
-    // add custom known
-    addCustomBtn.addEventListener('click', () => {
-      const val = parseFloat(customKnownInput.value);
-      if (isNaN(val) || val <= 0) {
-        addLog('⚠️ enter a valid positive number', 'info');
-        return;
-      }
-      const newBtn = document.createElement('button');
-      newBtn.className = 'marker-btn';
-      newBtn.dataset.conc = val;
-      newBtn.textContent = val;
-      newBtn.addEventListener('click', (e) => {
-        knownBtns.forEach(b => b.classList.remove('active'));
-        newBtn.classList.add('active');
-        selectedKnownConc = val;
-        isUnknownSelected = false;
-        unknownBtns.forEach(b => b.classList.remove('active'));
-        if (currentIntensity !== null) {
-          window._lastKnownIntensity = currentIntensity;
-          window._lastKnownConc = val;
-          updateConcentration(currentIntensity);
-        } else {
-          concentrationDisplay.innerHTML = `${val} <small> (std)</small>`;
-        }
-      });
-      document.getElementById('knownGroup').appendChild(newBtn);
-      newBtn.click();
-      customKnownInput.value = '';
-      addLog(`➕ added known: ${val}`, 'info');
-    });
-
-    // save data (ML)
-    saveBtn.addEventListener('click', () => {
-      if (currentIntensity === null || lastConcentrationResult === null) {
-        addLog('⚠️ no data to save. capture image first.', 'info');
-        return;
-      }
-      const logEntry = {
-        timestamp: new Date().toISOString(),
-        intensity: Math.round(currentIntensity * 10) / 10,
-        concentration: lastConcentrationResult,
-        type: isUnknownSelected ? 'unknown' : 'known',
-        knownRef: isUnknownSelected ? window._lastKnownConc : selectedKnownConc,
-      };
-      let stored = JSON.parse(localStorage.getItem('concentrationMLData') || '[]');
-      stored.push(logEntry);
-      localStorage.setItem('concentrationMLData', JSON.stringify(stored));
-      addLog(`💾 saved: intensity ${logEntry.intensity} → conc ${logEntry.concentration} (${logEntry.type})`, isUnknownSelected ? 'unknown' : 'info');
-      addLog(`📊 dataset now ${stored.length} records`, 'info');
-    });
-
-    // drag & drop
-    imageBox.addEventListener('dragover', (e) => { e.preventDefault(); imageBox.style.background = '#d4e2f5'; });
-    imageBox.addEventListener('dragleave', () => { imageBox.style.background = '#d9e3f0'; });
-    imageBox.addEventListener('drop', (e) => {
-      e.preventDefault();
-      imageBox.style.background = '#d9e3f0';
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) processImage(file);
-    });
-    imageBox.addEventListener('click', () => fileInput.click());
-
-    // default known
-    document.querySelector('#knownGroup .marker-btn.active')?.click();
-  })();
+updateDatasetCounters();
 </script>
 </body>
 </html>

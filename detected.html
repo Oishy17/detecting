@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Color intensity · concentration (multi-layer)</title>
+  <!-- Chart.js for mini visual -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chat.umd.min.js"></script>
+  <style>
+    /* ---- reset & base ---- */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, system-ui, sans-serif; }
+    body {
+      background: #eef3fc;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .app-shell {
+      max-width: 780px;
+      width: 100%;
+      background: white;
+      border-radius: 48px;
+      padding: 20px 20px 28px;
+      box-shadow: 0 20px 40px rgba(0,20,50,0.12);
+    }
+    /* ---- layer 1 : header ---- */
+    .layer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .layer-header h1 {
+      font-weight: 600;
+      font-size: 1.9rem;
+      color: #0b1e3a;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .layer-header .badge-layer {
+      background: #d3e2f7;
+      padding: 6px 16px;
+      border-radius: 60px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #1d3f66;
+    }
+    .subhead {
+      color: #3d5a78;
+      padding-left: 14px;
+      border-left: 4px solid #2b7be4;
+      margin-bottom: 18px;
+      font-weight: 400;
+      font-size: 0.95rem;
+    }
+
+    /* ---- layer 2 : image input & preview ---- */
+    .layer-image {
+      background: #f0f6ff;
+      border-radius: 32px;
+      padding: 16px 16px 14px;
+      margin-bottom: 18px;
+      border: 1px solid #dce8f8;
+    }
+    .image-box {
+      background: #d9e3f0;
+      border-radius: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 14px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .image-box img {
+      max-width: 100%;
+      max-height: 280px;
+      display: block;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+    .placeholder-text {
+      color: #3b5a7a;
+      opacity: 0.7;
+      padding: 20px;
+      text-align: center;
+      font-weight: 400;
+    }
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .btn {
+      background: white;
+      border: 1px solid #c5d6ea;
+      padding: 10px 24px;
+      border-radius: 60px;
+      font-weight: 500;
+      color: #1a3352;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex: 1 0 auto;
+      justify-content: center;
+      background: #f0f6ff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .btn-primary {
+      background: #1b3b6b;
+      border: 1px solid #1b3b6b;
+      color: white;
+      box-shadow: 0 6px 12px rgba(27,59,107,0.18);
+    }
+    .btn-primary:active { background: #0f2a4a; transform: scale(0.96); }
+    .btn-outline { background: transparent; border: 1px solid #a0bada; }
+    .btn:active { transform: scale(0.96); }
+    #fileInput { display: none; }
+
+    /* ---- layer 3 : markers & calibration (known / unknown) ---- */
+    .layer-markers {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 16px 0 12px;
+    }
+    .marker-card {
+      background: #f5faff;
+      border-radius: 40px;
+      padding: 12px 16px;
+      border: 1px solid #e2edfc;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+    }
+    .marker-label {
+      font-weight: 500;
+      color: #103456;
+      min-width: 100px;
+      font-size: 0.9rem;
+    }
+    .marker-group {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .marker-btn {
+      background: white;
+      border: 1px solid #bed4ed;
+      border-radius: 40px;
+      padding: 5px 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a3a5e;
+      cursor: pointer;
+      transition: 0.1s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+      flex: 0 1 auto;
+    }
+    .marker-btn.active {
+      background: #1b3b6b;
+      border-color: #1b3b6b;
+      color: white;
+      box-shadow: 0 4px 8px rgba(27,59,107,0.2);
+    }
+    .marker-btn.unknown {
+      border-color: #b3893c;
+      background: #fff3db;
+    }
+    .marker-btn.unknown.active {
+      background: #b3893c;
+      border-color: #b3893c;
+      color: white;
+    }
+    .custom-known-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .custom-known-row input {
+      flex: 1;
+      padding: 8px 16px;
+      border-radius: 60px;
+      border: 1px solid #bed4ed;
+      background: white;
+      font-weight: 500;
+      min-width: 80px;
+    }
+    .custom-known-row button {
+      background: #d4e2f5;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-weight: 500;
+      color: #1a3a5e;
+      cursor: pointer;
+    }
+
+    /* ---- layer 4 : result panel ---- */
+    .layer-result {
+      background: #e5effa;
+      border-radius: 32px;
+      padding: 16px 20px;
+      margin: 14px 0 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #d3e2f5;
+    }
+    .result-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .result-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #34608b;
+    }
+    .result-value {
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: #0b2442;
+    }
+    .result-value small {
+      font-weight: 400;
+      font-size: 0.9rem;
+      color: #2b5a82;
+    }
+    .mini-chart-wrap {
+      width: 100%;
+      margin-top: 6px;
+    }
+    canvas#intensityChart {
+      max-height: 50px;
+      width: 100% !important;
+    }
+
+    /* ---- layer 5 : save & log ---- */
+    .layer-save {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+      gap: 12px;
+    }
+    .btn-save {
+      background: #1f8b4c;
+      border: none;
+      color: white;
+      padding: 12px 32px;
+      border-radius: 60px;
+      font-weight: 600;
+      box-shadow: 0 6px 14px rgba(31,139,76,0.22);
+      cursor: pointer;
+    }
+    .btn-save:active { background: #13683a; transform: scale(0.96); }
+    .layer-log {
+      margin-top: 18px;
+      background: #f0f5fd;
+      border-radius: 28px;
+      padding: 12px 16px;
+      max-height: 130px;
+      overflow-y: auto;
+      border: 1px solid #d4e2f5;
+      font-size: 0.8rem;
+      color: #1f3f62;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px dashed #c7d9f0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .badge {
+      background: #2b7be4;
+      color: white;
+      border-radius: 40px;
+      padding: 0 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .badge.unknown-badge { background: #b3893c; }
+    .footnote {
+      margin-top: 14px;
+      color: #4f6f92;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+    .hidden { display: none; }
+
+    @media (max-width: 500px) {
+      .app-shell { padding: 14px; }
+      .marker-card { flex-direction: column; align-items: stretch; }
+      .marker-label { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="app">
+
+  <!-- LAYER 1 : HEADER -->
+  <div class="layer-header">
+    <h1>🎯 concenTRAK</h1>
+    <span class="badge-layer">multi‑layer · v2</span>
+  </div>
+  <div class="subhead">color intensity → concentration · known calibration</div>
+
+  <!-- LAYER 2 : IMAGE INPUT -->
+  <div class="layer-image">
+    <div class="image-box" id="imageBox">
+      <img id="previewImage" src="" alt="preview" style="display:none;">
+      <span class="placeholder-text" id="placeholderText">📷 tap to upload · drag & drop</span>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-primary" id="cameraBtn">📸 Camera</button>
+      <button class="btn btn-outline" id="uploadBtn">🖼️ Upload</button>
+      <input type="file" id="fileInput" accept="image/*" capture="environment">
+    </div>
+  </div>
+
+  <!-- LAYER 3 : MARKERS (known / unknown) -->
+  <div class="layer-markers">
+    <div class="marker-card">
+      <span class="marker-label">📌 Known conc.</span>
+      <div class="marker-group" id="knownGroup">
+        <button class="marker-btn" data-conc="10">10</button>
+        <button class="marker-btn active" data-conc="25">25</button>
+        <button class="marker-btn" data-conc="50">50</button>
+        <button class="marker-btn" data-conc="100">100</button>
+        <button class="marker-btn" data-conc="200">200</button>
+      </div>
+    </div>
+    <div class="marker-card">
+      <span class="marker-label">❓ Unknown (X)</span>
+      <div class="marker-group" id="unknownGroup">
+        <button class="marker-btn unknown" data-conc="unknown">⚡ sample X</button>
+      </div>
+    </div>
+    <div class="custom-known-row">
+      <span style="font-weight:400; color:#1e3b5e;">➕ add known:</span>
+      <input type="number" id="customKnownInput" placeholder="e.g. 75">
+      <button id="addCustomKnownBtn">Add</button>
+    </div>
+  </div>
+
+  <!-- LAYER 4 : RESULT + mini chart -->
+  <div class="layer-result">
+    <div class="result-item">
+      <span class="result-label">📊 intensity (avg)</span>
+      <span class="result-value" id="intensityDisplay">—</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">🧪 concentration</span>
+      <span class="result-value" id="concentrationDisplay">— <small></small></span>
+    </div>
+    <div class="mini-chart-wrap">
+      <canvas id="intensityChart" width="200" height="30"></canvas>
+    </div>
+  </div>
+
+  <!-- LAYER 5 : SAVE & LOG -->
+  <div class="layer-save">
+    <button class="btn-save" id="saveDataBtn">💾 save data (ML)</button>
+  </div>
+  <div class="layer-log" id="logArea">
+    <div class="log-entry">📋 ready · capture or upload image</div>
+  </div>
+  <div class="footnote">⚡ accurate intensity · known calibration reduces environment variance</div>
+</div>
+
+<script>
+  (function() {
+    // ---- DOM refs ----
+    const previewImg = document.getElementById('previewImage');
+    const placeholder = document.getElementById('placeholderText');
+    const fileInput = document.getElementById('fileInput');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const intensityDisplay = document.getElementById('intensityDisplay');
+    const concentrationDisplay = document.getElementById('concentrationDisplay');
+    const logArea = document.getElementById('logArea');
+    const saveBtn = document.getElementById('saveDataBtn');
+    const knownBtns = document.querySelectorAll('#knownGroup .marker-btn');
+    const unknownBtns = document.querySelectorAll('#unknownGroup .marker-btn');
+    const customKnownInput = document.getElementById('customKnownInput');
+    const addCustomBtn = document.getElementById('addCustomKnownBtn');
+    const imageBox = document.getElementById('imageBox');
+
+    // ---- state ----
+    let currentIntensity = null;
+    let selectedKnownConc = 25;
+    let isUnknownSelected = false;
+    let lastConcentrationResult = null;
+    let chartInstance = null;
+
+    // store reference
+    window._lastKnownIntensity = null;
+    window._lastKnownConc = null;
+
+    // ---- helpers ----
+    function addLog(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const badge = type === 'unknown' ? '<span class="badge unknown-badge">unknown</span>' : '<span class="badge">known</span>';
+      entry.innerHTML = `${badge} ${message}`;
+      logArea.prepend(entry);
+      if (logArea.children.length > 20) logArea.removeChild(logArea.lastChild);
+    }
+
+    // ---- intensity extraction (central crop) ----
+    function extractIntensityFromImage(source) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          let w = img.width, h = img.height;
+          const maxDim = 400;
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim/w, maxDim/h);
+            w = Math.floor(w * ratio);
+            h = Math.floor(h * ratio);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const data = imageData.data;
+          let total = 0, count = 0;
+          const startX = Math.floor(w * 0.2), endX = Math.floor(w * 0.8);
+          const startY = Math.floor(h * 0.2), endY = Math.floor(h * 0.8);
+          for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+              const idx = (y * w + x) * 4;
+              const gray = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+              total += gray;
+              count++;
+            }
+          }
+          const avg = count > 0 ? total / count : 128;
+          resolve(avg);
+        };
+        img.onerror = () => resolve(null);
+        if (source instanceof File || source instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = (e) => { img.src = e.target.result; };
+          reader.readAsDataURL(source);
+        } else if (typeof source === 'string') {
+          img.src = source;
+        } else {
+          resolve(null);
+        }
+      });
+    }
+
+    // ---- update UI ----
+    function updateConcentration(intensity) {
+      if (intensity === null || intensity === undefined) {
+        intensityDisplay.textContent = '—';
+        concentrationDisplay.innerHTML = '—';
+        return;
+      }
+      const rounded = Math.round(intensity * 10) / 10;
+      intensityDisplay.textContent = rounded;
+
+      let resultConc = null;
+      let knownIntensityRef = window._lastKnownIntensity || intensity;
+      let knownConcRef = window._lastKnownConc || selectedKnownConc;
+
+      if (isUnknownSelected && window._lastKnownIntensity && window._lastKnownConc) {
+        const knownIntensity = window._lastKnownIntensity;
+        const knownConc = window._lastKnownConc;
+        if (knownIntensity > 0) {
+          resultConc = (intensity / knownIntensity) * knownConc;
+          resultConc = Math.round(resultConc * 100) / 100;
+        } else {
+          resultConc = intensity / 2;
+        }
+        concentrationDisplay.innerHTML = `${resultConc} <small> (from X)</small>`;
+        lastConcentrationResult = resultConc;
+        addLog(`Unknown → conc ~ ${resultConc} (intensity ${rounded})`, 'unknown');
+      } else {
+        // known mode
+        const knownConc = selectedKnownConc;
+        concentrationDisplay.innerHTML = `${knownConc} <small> (std)</small>`;
+        resultConc = knownConc;
+        window._lastKnownIntensity = intensity;
+        window._lastKnownConc = knownConc;
+        lastConcentrationResult = knownConc;
+        addLog(`Known ${knownConc} · intensity ${rounded} (ref)`, 'info');
+      }
+      // chart
+      updateMiniChart(intensity, resultConc);
+    }
+
+    function updateMiniChart(intensity, conc) {
+      const ctx = document.getElementById('intensityChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      if (!intensity) return;
+      const data = {
+        labels: ['intensity', 'conc (scaled)'],
+        datasets: [{
+          data: [intensity, conc ? Math.min(conc, 255) : 0],
+          backgroundColor: ['#2b7be4', '#b3893c'],
+          borderRadius: 6,
+        }]
+      };
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, max: 255, display: false }, x: { display: false } }
+        }
+      });
+    }
+
+    async function processImage(source) {
+      const intensity = await extractIntensityFromImage(source);
+      if (intensity === null) {
+        addLog('⚠️ could not extract intensity', 'info');
+        return;
+      }
+      currentIntensity = intensity;
+      updateConcentration(intensity);
+      if (source instanceof File || source instanceof Blob) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+          placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(source);
+      } else if (typeof source === 'string') {
+        previewImg.src = source;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+      }
+    }
+
+    // ---- event listeners ----
+    cameraBtn.addEventListener('click', () => fileInput.click());
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      processImage(file);
+      fileInput.value = '';
+    });
+
+    // known markers
+    knownBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        knownBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedKnownConc = parseFloat(btn.dataset.conc);
+        isUnknownSelected = false;
+        unknownBtns.forEach(b => b.classList.remove('active'));
+        if (currentIntensity !== null) {
+          window._lastKnownIntensity = currentIntensity;
+          window._lastKnownConc = selectedKnownConc;
+          updateConcentration(currentIntensity);
+        } else {
+          concentrationDisplay.innerHTML = `${selectedKnownConc} <small> (std)</small>`;
+          addLog(`Known set to ${selectedKnownConc}`, 'info');
+        }
+      });
+    });
+
+    // unknown markers
+    unknownBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        unknownBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        isUnknownSelected = true;
+        knownBtns.forEach(b => b.classList.remove('active'));
+        if (currentIntensity !== null && window._lastKnownIntensity) {
+          updateConcentration(currentIntensity);
+        } else {
+          addLog('⚠️ set a known concentration first (reference)', 'info');
+        }
+      });
+    });
+
+    // add custom known
+    addCustomBtn.addEventListener('click', () => {
+      const val = parseFloat(customKnownInput.value);
+      if (isNaN(val) || val <= 0) {
+        addLog('⚠️ enter a valid positive number', 'info');
+        return;
+      }
+      const newBtn = document.createElement('button');
+      newBtn.className = 'marker-btn';
+      newBtn.dataset.conc = val;
+      newBtn.textContent = val;
+      newBtn.addEventListener('click', (e) => {
+        knownBtns.forEach(b => b.classList.remove('active'));
+        newBtn.classList.add('active');
+        selectedKnownConc = val;
+        isUnknownSelected = false;
+        unknownBtns.forEach(b => b.classList.remove('active'));
+        if (currentIntensity !== null) {
+          window._lastKnownIntensity = currentIntensity;
+          window._lastKnownConc = val;
+          updateConcentration(currentIntensity);
+        } else {
+          concentrationDisplay.innerHTML = `${val} <small> (std)</small>`;
+        }
+      });
+      document.getElementById('knownGroup').appendChild(newBtn);
+      newBtn.click();
+      customKnownInput.value = '';
+      addLog(`➕ added known: ${val}`, 'info');
+    });
+
+    // save data (ML)
+    saveBtn.addEventListener('click', () => {
+      if (currentIntensity === null || lastConcentrationResult === null) {
+        addLog('⚠️ no data to save. capture image first.', 'info');
+        return;
+      }
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        intensity: Math.round(currentIntensity * 10) / 10,
+        concentration: lastConcentrationResult,
+        type: isUnknownSelected ? 'unknown' : 'known',
+        knownRef: isUnknownSelected ? window._lastKnownConc : selectedKnownConc,
+      };
+      let stored = JSON.parse(localStorage.getItem('concentrationMLData') || '[]');
+      stored.push(logEntry);
+      localStorage.setItem('concentrationMLData', JSON.stringify(stored));
+      addLog(`💾 saved: intensity ${logEntry.intensity} → conc ${logEntry.concentration} (${logEntry.type})`, isUnknownSelected ? 'unknown' : 'info');
+      addLog(`📊 dataset now ${stored.length} records`, 'info');
+    });
+
+    // drag & drop
+    imageBox.addEventListener('dragover', (e) => { e.preventDefault(); imageBox.style.background = '#d4e2f5'; });
+    imageBox.addEventListener('dragleave', () => { imageBox.style.background = '#d9e3f0'; });
+    imageBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      imageBox.style.background = '#d9e3f0';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) processImage(file);
+    });
+    imageBox.addEventListener('click', () => fileInput.click());
+
+    // default known
+    document.querySelector('#knownGroup .marker-btn.active')?.click();
+  })();
+</script>
+</body>
+</html>

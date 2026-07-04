@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg: #F7F5EF;
@@ -282,6 +283,7 @@
             <label>Response channel (yellow intensity)</label>
             <select id="selChannel">
               <option value="lum">Luminance (recommended for yellow)</option>
+              <option value="yellowRGB">Yellow Intensity (RGB-based)</option>
               <option value="r">Red channel</option>
               <option value="g">Green channel</option>
               <option value="b">Blue channel</option>
@@ -291,12 +293,9 @@
             </select>
           </div>
           <div class="field" style="margin-bottom:0;">
-            <label>Fit type</label>
-            <select id="selFitType">
-              <option value="poly2">Polynomial degree 2 (quadratic)</option>
-              <option value="poly3">Polynomial degree 3 (cubic)</option>
-              <option value="linear">Linear (for comparison)</option>
-            </select>
+            <label>Polynomial degree (n)</label>
+            <input type="number" id="inpDegree" min="1" step="1" value="1" />
+            <div class="canvas-help" id="degreeHint" style="margin-top:2px;">Needs at least n+1 known markers.</div>
           </div>
         </div>
 
@@ -318,7 +317,7 @@
         <h2 class="sec-title">Readings</h2>
         <div class="table-scroll">
         <table class="res-table" id="resTable">
-          <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Response</th><th>Conc.</th></tr></thead>
+          <thead><tr><th></th><th>Label</th><th>Type</th><th>RGB</th><th>Yellow Int. (RGB)</th><th>Yellow Int. (b*)</th><th>Response</th><th>Conc.</th></tr></thead>
           <tbody id="resTableBody"></tbody>
         </table>
         </div>
@@ -327,13 +326,14 @@
 
     <div class="card" style="margin-top:18px;">
       <h2 class="sec-title">ML dataset (this session)</h2>
-      <p class="muted" style="font-size:12.5px; margin-top:-6px;">"Save" downloads a PNG with markers and a CSV with all data + polynomial coefficients. Every save is kept in session for bulk export.</p>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px;">"Save" downloads a PNG with markers, a CSV, and an Excel file with all data + polynomial coefficients. Every save is kept in session for bulk export.</p>
       <div class="dataset-bar">
         <span class="dataset-count">Saved: <b id="datasetCount">0</b> records, <b id="datasetMarkerCount">0</b> marker rows</span>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-sm" id="btnSaveRecord">Save (image + CSV)</button>
+          <button class="btn btn-sm" id="btnSaveRecord">Save (image + CSV + Excel)</button>
           <button class="btn btn-sm" id="btnExportJSON">Export all — JSON</button>
           <button class="btn btn-sm" id="btnExportCSV">Export all — CSV</button>
+          <button class="btn btn-sm" id="btnExportXLSX">Export all — Excel</button>
           <button class="btn btn-sm btn-danger" id="btnClearDataset">Clear session</button>
         </div>
       </div>
@@ -404,6 +404,7 @@ function xyzToLab(X,Y,Z){
 }
 function rgbToLab(r,g,b){ const [x,y,z]=rgbToXyz(r,g,b); return xyzToLab(x,y,z); }
 function luminance(r,g,b){ return 0.2126*r + 0.7152*g + 0.0722*b; }
+function yellowIndexRGB(r,g,b){ return Math.max(0, Math.min(100, (((r+g)/2 - b) / 2.55))); }
 
 /* ============================= IMAGE LOADING ============================= */
 function loadImageToSource(imgEl) {
@@ -478,7 +479,7 @@ function sampleAllMarkers() {
     const raw = sampleMarker(m);
     let r = Math.min(255, raw.r*corr.r), g = Math.min(255, raw.g*corr.g), b = Math.min(255, raw.b*corr.b);
     const [L,a,bb] = rgbToLab(r,g,b);
-    m.sampled = { r, g, b, L, a, bLab: bb, lum: luminance(r,g,b), rawR: raw.r, rawG: raw.g, rawB: raw.b };
+    m.sampled = { r, g, b, L, a, bLab: bb, yellowIntensity: bb, yellowIntensityRGB: yellowIndexRGB(r,g,b), lum: luminance(r,g,b), rawR: raw.r, rawG: raw.g, rawB: raw.b };
   });
   return !!ref;
 }
@@ -513,6 +514,7 @@ function deleteMarker(id) {
 function renderMarkerList() {
   const list = document.getElementById('markerList');
   document.getElementById('markerCountLbl').textContent = `(${state.markers.length})`;
+  updateDegreeHint();
   list.innerHTML = '';
   state.markers.forEach(m=>{
     const el = document.createElement('div');
@@ -536,6 +538,15 @@ function renderMarkerList() {
 }
 function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''); }
 function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function updateDegreeHint(){
+  const hint = document.getElementById('degreeHint');
+  if(!hint) return;
+  const knownCount = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null).length;
+  const maxDegree = Math.max(1, knownCount - 1);
+  hint.textContent = knownCount >= 2
+    ? `${knownCount} known markers → max degree ${maxDegree}. Needs at least n+1 known markers.`
+    : `Needs at least n+1 known markers.`;
+}
 
 /* ============================= EDITOR ============================= */
 function showEditor(m) {
@@ -725,12 +736,17 @@ function rSquared(xs, ys, coeffs) {
 document.getElementById('btnAnalyze').onclick = analyze;
 function analyze(){
   const knownCount = state.markers.filter(m=>m.type==='known' && m.conc!=='' && m.conc!=null).length;
-  if(knownCount < 3){ toast('Need at least 3 known-concentration markers for polynomial fit'); return; }
+  let degree = parseInt(document.getElementById('inpDegree').value, 10);
+  if(!Number.isFinite(degree) || degree < 1) degree = 1;
+  if(knownCount < 2){ toast('Need at least 2 known-concentration markers'); return; }
+  if(knownCount < degree + 1){
+    toast(`Degree ${degree} needs at least ${degree+1} known markers — you have ${knownCount}. Add more markers or lower the degree.`);
+    return;
+  }
   sampleAllMarkers();
   const channel = document.getElementById('selChannel').value;
-  const fitType = document.getElementById('selFitType').value;
+  const fitType = 'poly' + degree;
   state.fitType = fitType;
-  const degree = fitType === 'poly2' ? 2 : (fitType === 'poly3' ? 3 : 1);
 
   function respOf(m){
     let base;
@@ -741,6 +757,7 @@ function analyze(){
       case 'labL': return m.sampled.L;
       case 'laba': return m.sampled.a;
       case 'labb': return m.sampled.bLab;
+      case 'yellowRGB': return m.sampled.yellowIntensityRGB;
       default: base = m.sampled.lum;
     }
     return base;
@@ -751,7 +768,7 @@ function analyze(){
   const xs = knowns.map(m=>parseFloat(m.conc));
   const ys = knowns.map(m=>m.response);
   const coeffs = polyFit(xs, ys, degree);
-  if(!coeffs) { toast('Polynomial fit failed — try linear or more data'); return; }
+  if(!coeffs) { toast('Fit failed — try a lower degree or add more known markers'); return; }
   const r2 = rSquared(xs, ys, coeffs);
 
   state.markers.forEach(m=>{
@@ -791,7 +808,7 @@ function renderResults(){
   const warnEl = document.getElementById('fitWarning');
   if(state.fit.r2 < 0.9){
     warnEl.style.display='block';
-    warnEl.textContent = `R² = ${state.fit.r2.toFixed(4)} — consider more standards or a higher-degree polynomial.`;
+    warnEl.textContent = `R² = ${state.fit.r2.toFixed(4)} — consider more standards or a different degree.`;
   } else warnEl.style.display='none';
 
   const body = document.getElementById('resTableBody');
@@ -803,6 +820,8 @@ function renderResults(){
     const concTxt = m.type==='reference' ? '—' : (isFinite(m.resultConc) ? m.resultConc.toFixed(3)+' '+(m.unit||'') : '—');
     tr.innerHTML = `<td>${swatch}</td><td>${escapeHtml(m.label||('#'+m.id))}</td><td><span class="tag ${m.type}">${m.type}</span></td>
       <td>${m.sampled.r.toFixed(0)},${m.sampled.g.toFixed(0)},${m.sampled.b.toFixed(0)}</td>
+      <td>${m.sampled.yellowIntensityRGB.toFixed(2)}</td>
+      <td>${m.sampled.yellowIntensity.toFixed(2)}</td>
       <td>${m.response!=null ? m.response.toFixed(4) : '—'}</td><td>${concTxt}</td>`;
     body.appendChild(tr);
   });
@@ -896,6 +915,13 @@ function drawAnnotatedImage(){
 }
 function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
 function downloadBlob(content, filename, type){ const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+function downloadXLSX(rows, filename, sheetName){
+  if(typeof XLSX === 'undefined'){ toast('Excel library failed to load — check your internet connection'); return; }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
+  XLSX.writeFile(wb, filename);
+}
 
 document.getElementById('btnSaveRecord').onclick = ()=>{
   if(!state.fit){ toast('Run Analyze first'); return; }
@@ -905,31 +931,32 @@ document.getElementById('btnSaveRecord').onclick = ()=>{
   const annotated = drawAnnotatedImage();
   downloadDataUrl(annotated.toDataURL('image/png'), name+'.png');
 
-  const rows = [['image_name','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration','fit_type','degree','coeffs','r2']];
+  const rows = [['image_name','marker_id','type','label','unit','R','G','B','L','a','b_lab','yellow_intensity_rgb','yellow_intensity_labb','response','concentration','fit_type','degree','coeffs','r2']];
   const coeffStr = state.fit.coeffs.map(c=>c.toFixed(6)).join(';');
   state.markers.filter(m=>m.sampled).forEach(m=>{
     rows.push([
       name, m.id, m.type, JSON.stringify(m.label||''), m.unit||'',
       m.sampled.r.toFixed(2), m.sampled.g.toFixed(2), m.sampled.b.toFixed(2),
-      m.sampled.L.toFixed(2), m.sampled.a.toFixed(2), m.sampled.bLab.toFixed(2),
+      m.sampled.L.toFixed(2), m.sampled.a.toFixed(2), m.sampled.bLab.toFixed(2), m.sampled.yellowIntensityRGB.toFixed(2), m.sampled.yellowIntensity.toFixed(2),
       m.response!=null ? m.response.toFixed(4) : '',
       isFinite(m.resultConc) ? m.resultConc.toFixed(4) : '',
       state.fit.type, state.fit.degree, coeffStr, state.fit.r2.toFixed(6)
     ]);
   });
   downloadBlob(rows.map(r=>r.join(',')).join('\n'), name+'.csv', 'text/csv');
+  downloadXLSX(rows, name+'.xlsx', 'Reading');
 
   state.dataset.push({
     id: name,
     fit: state.fit,
     markers: state.markers.filter(m=>m.sampled).map(m=>({
       markerId: m.id, type: m.type, label: m.label, unit: m.unit,
-      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab,
+      r: m.sampled.r, g: m.sampled.g, b: m.sampled.b, L: m.sampled.L, a: m.sampled.a, bLab: m.sampled.bLab, yellowIntensity: m.sampled.yellowIntensity, yellowIntensityRGB: m.sampled.yellowIntensityRGB,
       response: m.response, concentration: isFinite(m.resultConc) ? m.resultConc : null
     }))
   });
   updateDatasetCounters();
-  toast('Saved '+name+'.png and '+name+'.csv');
+  toast('Saved '+name+'.png, .csv and .xlsx');
 };
 
 document.getElementById('btnExportJSON').onclick = ()=>{
@@ -938,15 +965,27 @@ document.getElementById('btnExportJSON').onclick = ()=>{
 };
 document.getElementById('btnExportCSV').onclick = ()=>{
   if(state.dataset.length===0){ toast('No saved records yet'); return; }
-  const rows = [['record_id','fit_type','degree','coeffs','r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','response','concentration']];
+  const rows = [['record_id','fit_type','degree','coeffs','r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','yellow_intensity_rgb','yellow_intensity_labb','response','concentration']];
   state.dataset.forEach(rec=>{
     const coeffStr = rec.fit.coeffs.map(c=>c.toFixed(6)).join(';');
     rec.markers.forEach(m=>{
       rows.push([rec.id, rec.fit.type, rec.fit.degree, coeffStr, rec.fit.r2.toFixed(6),
-        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
+        m.markerId, m.type, JSON.stringify(m.label||''), m.unit, m.r.toFixed(2), m.g.toFixed(2), m.b.toFixed(2), m.L.toFixed(2), m.a.toFixed(2), m.bLab.toFixed(2), m.yellowIntensityRGB.toFixed(2), m.yellowIntensity.toFixed(2), m.response?.toFixed(4)??'', m.concentration??'']);
     });
   });
   downloadBlob(rows.map(r=>r.join(',')).join('\n'), 'yellow_dataset.csv', 'text/csv');
+};
+document.getElementById('btnExportXLSX').onclick = ()=>{
+  if(state.dataset.length===0){ toast('No saved records yet'); return; }
+  const rows = [['record_id','fit_type','degree','coeffs','r2','marker_id','type','label','unit','R','G','B','L','a','b_lab','yellow_intensity_rgb','yellow_intensity_labb','response','concentration']];
+  state.dataset.forEach(rec=>{
+    const coeffStr = rec.fit.coeffs.map(c=>c.toFixed(6)).join(';');
+    rec.markers.forEach(m=>{
+      rows.push([rec.id, rec.fit.type, rec.fit.degree, coeffStr, rec.fit.r2.toFixed(6),
+        m.markerId, m.type, m.label||'', m.unit, Number(m.r.toFixed(2)), Number(m.g.toFixed(2)), Number(m.b.toFixed(2)), Number(m.L.toFixed(2)), Number(m.a.toFixed(2)), Number(m.bLab.toFixed(2)), Number(m.yellowIntensityRGB.toFixed(2)), Number(m.yellowIntensity.toFixed(2)), m.response!=null?Number(m.response.toFixed(4)):'', m.concentration??'']);
+    });
+  });
+  downloadXLSX(rows, 'yellow_dataset.xlsx', 'Dataset');
 };
 document.getElementById('btnClearDataset').onclick = ()=>{
   if(confirm('Clear all session-saved records? (Export first if needed.)')){
